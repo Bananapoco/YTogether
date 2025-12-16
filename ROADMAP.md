@@ -50,15 +50,15 @@ app
   index.ts                  → RoomState, User types
 ```
 
-## Phase 1: Setup & Home Page (1-2 hours)
+## Phase 1: Setup & Home Page (1-2 hours) [COMPLETED]
 
-- Create Next.js app with TypeScript
+- [x] Create Next.js app with TypeScript
   - `npx create-next-app@latest --typescript`
-- Install dependencies
+- [x] Install dependencies
   - `npm install firebase tailwindcss postcss autoprefixer`
   - `npx tailwindcss init -p`
   - `npx shadcn-ui@latest init` (accept defaults, set base colors to match YouTube)
-- Configure Tailwind (tailwind.config.ts)
+- [x] Configure Tailwind (tailwind.config.ts)
   - Enable dark mode: `darkMode: 'class'`
   - Add custom colors for both themes:
     ```TypeScript
@@ -82,20 +82,20 @@ app
       },
     }
     ```
-- Add shadcn components
+- [x] Add shadcn components
   - `npx shadcn-ui@latest add button input card form label dialog`
-- Set up theme toggle
+- [x] Set up theme toggle
   - Use next-themes for theme management
   - `npm install next-themes`
   - Configure ThemeProvider in root layout
   - Add theme toggle component (sun/moon icon)
-- Create Firebase project
+- [x] Create Firebase project
   - Go to firebase.google.com → New project
   - Enable Realtime Database (start in test mode)
   - Copy web config
-- Create `/lib/firebase.ts`
+- [x] Create `/lib/firebase.ts`
   - Export initialized app, db
-- Build Home Page (`/app/page.tsx`)
+- [x] Build Home Page (`/app/page.tsx`)
   - Two cards: "Create Room" and "Join Room"
   - Create: Generate random 6-char roomId → navigate to `/room/[roomId]`
   - Join: Input roomId + optional password → validate → navigate
