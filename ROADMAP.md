@@ -103,39 +103,39 @@ app
   - Background: ytBg (light) / dark:ytBg (dark), text adapts to theme
   - Include theme toggle button in header/nav
 
-## Phase 2: Room Page Layout (1 hour)
+## Phase 2: Room Page Layout (1 hour) [COMPLETED]
 
-- Create `/app/room/[roomId]/page.tsx`
+- [x] Create `/app/room/[roomId]/page.tsx`
   - Fetch roomId from params
   - Layout: flex row
   - Left: Video player (70-80% width) + VideoInput bar below
   - Right: Sidebar (UserList + basic controls)
-- Add components
+- [x] Add components
   - `VideoPlayer.tsx` (iframe placeholder for now)
   - `VideoInput.tsx` (input for YT URL + submit button)
   - `UserList.tsx` (placeholder list)
   - `RoomSidebar.tsx` (wrap UserList)
-- Style with Tailwind
+- [x] Style with Tailwind
   - Main container: `bg-ytBg dark:bg-dark-ytBg text-ytText dark:text-white min-h-screen`
   - Video area: `bg-black rounded-lg overflow-hidden`
   - Sidebar: `bg-ytSurface dark:bg-dark-ytSurface w-80 p-4`
   - Buttons: `bg-ytRed hover:bg-red-700`
   - Theme toggle accessible in sidebar/header
 
-## Phase 3: YouTube IFrame Integration (1-2 hours)
+## Phase 3: YouTube IFrame Integration (1-2 hours) [COMPLETED]
 
-- Create `/lib/youtube.ts`
+- [x] Create `/lib/youtube.ts`
   - Function to extract videoId from URL
   - Load YT IFrame API script dynamically
-- Implement `VideoPlayer.tsx`
+- [x] Implement `VideoPlayer.tsx`
   - `div id="yt-player"`
   - `useEffect` to init `YT.Player` when videoId exists
   - Expose player instance via ref
   - Events: `onReady`, `onStateChange`
   - `playerVars`: `enablejsapi=1`, `controls=1`, `rel=0`
-- Add `VideoInput.tsx`
+- [x] Add `VideoInput.tsx`
   - Input field + button
-  - On submit: extract videoId → update Firebase room state
+  - On submit: extract videoId → update Firebase room state (currently local state updates, Firebase in Phase 4)
 
 ## Phase 4: Firebase Sync & State (2-3 hours)
 

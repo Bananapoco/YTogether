@@ -3,17 +3,30 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { Play, Users, Tv, ArrowRight, Video } from "lucide-react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { ThemeToggle } from "@/components/theme-toggle"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 
 export default function Home() {
   const router = useRouter()
   const [joinRoomId, setJoinRoomId] = useState("")
   const [joinPassword, setJoinPassword] = useState("")
   const [isJoining, setIsJoining] = useState(false)
+  
+  // Create Room State
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
+  const [creatorName, setCreatorName] = useState("")
+  const [isCreating, setIsCreating] = useState(false)
 
   // Generate random 6-character room ID
   const generateRoomId = () => {
@@ -25,9 +38,20 @@ export default function Home() {
     return result
   }
 
-  const handleCreateRoom = () => {
+  const handleCreateClick = () => {
+    setIsCreateDialogOpen(true)
+  }
+
+  const handleCreateSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!creatorName.trim()) return
+
+    setIsCreating(true)
     const roomId = generateRoomId()
-    router.push(`/room/${roomId}`)
+    const name = creatorName.trim()
+    
+    // Navigate to room with username
+    router.push(`/room/${roomId}?username=${encodeURIComponent(name)}`)
   }
 
   const handleJoinRoom = (e: React.FormEvent) => {
@@ -99,7 +123,7 @@ export default function Home() {
               </CardHeader>
               <CardContent>
                 <Button 
-                  onClick={handleCreateRoom} 
+                  onClick={handleCreateClick} 
                   className="w-full h-12 text-lg font-medium group-hover:bg-primary/90"
                   size="lg"
                 >
@@ -181,6 +205,39 @@ export default function Home() {
       <footer className="py-6 text-center text-sm text-muted-foreground">
         <p>Built for family movie nights ❤️</p>
       </footer>
+
+      {/* Create Room Dialog */}
+      <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Create Room</DialogTitle>
+            <DialogDescription>
+              Enter your name so others know who started the party.
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleCreateSubmit}>
+            <div className="grid gap-4 py-4">
+              <div className="grid gap-2">
+                <Label htmlFor="name">Your Name</Label>
+                <Input
+                  id="name"
+                  value={creatorName}
+                  onChange={(e) => setCreatorName(e.target.value)}
+                  placeholder="e.g. Alex"
+                  className="col-span-3"
+                  autoFocus
+                  required
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button type="submit" disabled={isCreating || !creatorName.trim()}>
+                {isCreating ? "Creating..." : "Start Party"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
