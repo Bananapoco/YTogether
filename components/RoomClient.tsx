@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useRef } from "react"
+import { useState, useEffect, useRef, useCallback } from "react"
 import { useSearchParams } from "next/navigation"
 import { ref, onValue, set, update, onDisconnect, serverTimestamp } from "firebase/database"
 import { db } from "@/lib/firebase"
@@ -16,7 +16,6 @@ interface RoomClientProps {
 
 export function RoomClient({ roomId }: RoomClientProps) {
   const searchParams = useSearchParams()
-  // User setup
   const [userId, setUserId] = useState<string>("")
   const username = searchParams.get("username") || "Anonymous"
 
@@ -31,11 +30,10 @@ export function RoomClient({ roomId }: RoomClientProps) {
 
   // Prevent circular updates
   const isRemoteUpdate = useRef(false)
+  const lastSeekTime = useRef(0) // Debounce seeks
 
   // Initialize User & Presence
   useEffect(() => {
-    // Generate or retrieve user ID
-    // Use sessionStorage so new tabs = new users (easier for testing/multiple sessions)
     let currentUserId = sessionStorage.getItem("yt_user_id")
     if (!currentUserId) {
       currentUserId = Math.random().toString(36).substring(2, 9)
@@ -46,17 +44,9 @@ export function RoomClient({ roomId }: RoomClientProps) {
     const userRef = ref(db, `rooms/${roomId}/users/${currentUserId}`)
     const connectedRef = ref(db, ".info/connected")
 
-    // Handle presence
     const unsubscribeConnected = onValue(connectedRef, (snap) => {
-      const isConnected = snap.val();
-      console.log("Firebase Connection Status:", isConnected);
-      
-      if (isConnected === true) {
-        // We're connected (or reconnected)
-        onDisconnect(userRef).remove() // Remove user on disconnect
-        
-        console.log("Adding user to room:", currentUserId, username);
-        // Add user to room
+      if (snap.val() === true) {
+        onDisconnect(userRef).remove()
         set(userRef, {
             name: username,
             connected: true,
@@ -70,75 +60,92 @@ export function RoomClient({ roomId }: RoomClientProps) {
     }
   }, [roomId, username])
 
-  // Sync Room State
+  // Sync Room State from Firebase
   useEffect(() => {
     const roomRef = ref(db, `rooms/${roomId}`)
     
     const unsubscribe = onValue(roomRef, (snapshot) => {
       const data = snapshot.val()
       if (data) {
-        // Calculate estimated current time based on lag
+        // Calculate estimated current time based on elapsed time since last update
         let adjustedTime = data.currentTime || 0
         if (data.isPlaying && data.lastUpdate) {
             const now = Date.now()
-            const timeDiff = (now - data.lastUpdate) / 1000
-            // Only adjust if the difference is reasonable (e.g., less than 1 hour) to avoid huge jumps on stale data
-            if (timeDiff > 0 && timeDiff < 3600) {
-                 adjustedTime += timeDiff
+            const elapsed = (now - data.lastUpdate) / 1000
+            if (elapsed > 0 && elapsed < 3600) {
+                adjustedTime += elapsed
             }
         }
 
         isRemoteUpdate.current = true
-        setRoomState(prev => ({
-          ...prev,
+        setRoomState({
           videoId: data.videoId || null,
           isPlaying: data.isPlaying || false,
           currentTime: adjustedTime,
           lastUpdate: data.lastUpdate || 0,
           users: data.users || {}
-        }))
+        })
         
-        // Reset flag after a short delay to allow effects to run
+        // Keep the flag true for a bit to prevent echo
         setTimeout(() => {
             isRemoteUpdate.current = false
-        }, 500)
+        }, 300)
       }
     })
 
     return () => unsubscribe()
   }, [roomId])
 
-  // Handlers
-  const handleVideoId = (id: string) => {
+  // Handle new video
+  const handleVideoId = useCallback((id: string) => {
     update(ref(db, `rooms/${roomId}`), {
       videoId: id,
-      isPlaying: true, // Auto play on new video
+      isPlaying: true,
       currentTime: 0,
       lastUpdate: serverTimestamp()
     })
-  }
+  }, [roomId])
 
-  const handlePlayerStateChange = (event: any) => {
-    // YT.PlayerState: -1 (unstarted), 0 (ended), 1 (playing), 2 (paused), 3 (buffering), 5 (video cued)
+  // Handle play/pause from player
+  const handlePlayerStateChange = useCallback((event: any) => {
     const playerState = event.data
     
-    // Avoid sending updates if this change triggered by a remote update
+    // Ignore if this is a result of a remote update
     if (isRemoteUpdate.current) return
 
-    if (playerState === 1) { // Playing
+    // Only handle explicit play/pause, not buffering or other states
+    if (playerState === 1) { // PLAYING
       update(ref(db, `rooms/${roomId}`), {
         isPlaying: true,
         currentTime: event.target.getCurrentTime(),
         lastUpdate: serverTimestamp()
       })
-    } else if (playerState === 2) { // Paused
+    } else if (playerState === 2) { // PAUSED
       update(ref(db, `rooms/${roomId}`), {
         isPlaying: false,
         currentTime: event.target.getCurrentTime(),
         lastUpdate: serverTimestamp()
       })
     }
-  }
+  }, [roomId])
+
+  // Handle seek from player (user skipped to a new position)
+  const handleSeek = useCallback((time: number) => {
+    // Ignore if this is from a remote sync
+    if (isRemoteUpdate.current) return
+    
+    // Debounce: don't send seeks more than once per 300ms
+    const now = Date.now()
+    if (now - lastSeekTime.current < 300) return
+    lastSeekTime.current = now
+
+    console.log("Broadcasting seek to:", time)
+    update(ref(db, `rooms/${roomId}`), {
+      currentTime: time,
+      isPlaying: true, // Force play after seek
+      lastUpdate: serverTimestamp()
+    })
+  }, [roomId])
 
   return (
     <div className="flex h-screen flex-col md:flex-row bg-background text-foreground overflow-hidden">
@@ -163,6 +170,7 @@ export function RoomClient({ roomId }: RoomClientProps) {
               isPlaying={roomState.isPlaying}
               currentTime={roomState.currentTime}
               onStateChange={handlePlayerStateChange}
+              onSeek={handleSeek}
             />
           </div>
 

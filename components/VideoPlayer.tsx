@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useRef, useState, useCallback } from "react"
 import { loadYouTubeScript } from "@/lib/youtube"
 
 interface VideoPlayerProps {
@@ -9,7 +9,7 @@ interface VideoPlayerProps {
   currentTime: number
   onPlayerReady?: (player: any) => void
   onStateChange?: (event: any) => void
-  onTimeUpdate?: (time: number) => void
+  onSeek?: (time: number) => void
 }
 
 export function VideoPlayer({ 
@@ -18,10 +18,13 @@ export function VideoPlayer({
   currentTime,
   onPlayerReady, 
   onStateChange,
-  onTimeUpdate
+  onSeek
 }: VideoPlayerProps) {
   const playerRef = useRef<any>(null)
   const containerRef = useRef<HTMLDivElement>(null)
+  const prevTimeRef = useRef<number>(0)
+  const lastSyncTimeRef = useRef<number>(0) // Track when we last synced from props
+  const isSyncingRef = useRef<boolean>(false) // Flag to prevent echo
   const [isApiLoaded, setIsApiLoaded] = useState(false)
   const [isPlayerReady, setIsPlayerReady] = useState(false)
 
@@ -39,7 +42,6 @@ export function VideoPlayer({
     if (!playerRef.current) {
       try {
         console.log("Initializing YT Player with ID:", videoId);
-        // We access window.YT safely now that types are defined
         playerRef.current = new window.YT.Player(containerRef.current, {
           height: '100%',
           width: '100%',
@@ -56,6 +58,7 @@ export function VideoPlayer({
             onReady: (event: any) => {
               console.log("Player Ready");
               setIsPlayerReady(true);
+              prevTimeRef.current = 0;
               if (onPlayerReady) onPlayerReady(event.target)
             },
             onStateChange: (event: any) => {
@@ -76,34 +79,29 @@ export function VideoPlayer({
   // Handle videoId changes
   useEffect(() => {
     if (playerRef.current && isPlayerReady && videoId) {
-      // Check if we can call the method
       if (typeof playerRef.current.getVideoData === 'function') {
         const currentVideoId = playerRef.current.getVideoData()?.video_id;
         if (currentVideoId !== videoId) {
             if (typeof playerRef.current.loadVideoById === 'function') {
                 playerRef.current.loadVideoById(videoId)
+                prevTimeRef.current = 0; // Reset time tracking for new video
             }
         }
       }
     }
   }, [videoId, isPlayerReady])
 
-  // Sync player state (play/pause/seek)
+  // Sync player state (play/pause/seek) from remote
   useEffect(() => {
     if (!playerRef.current || !isPlayerReady) return;
-    
-    // Safety check for methods
     if (typeof playerRef.current.getPlayerState !== 'function') return;
 
     const playerState = playerRef.current.getPlayerState();
-    
-    // Safety check for getCurrentTime
     const playerTime = typeof playerRef.current.getCurrentTime === 'function' 
         ? playerRef.current.getCurrentTime() 
         : 0;
     
     // Sync Play/Pause
-    // 1=playing, 3=buffering
     if (isPlaying && playerState !== 1 && playerState !== 3) { 
       if (typeof playerRef.current.playVideo === 'function') {
         playerRef.current.playVideo();
@@ -114,27 +112,55 @@ export function VideoPlayer({
       }
     }
 
-    // Sync Time (only if deviation > 2s to avoid jitter)
-    if (Math.abs(playerTime - currentTime) > 2) {
+    // Sync Time (if deviation > 1.5s)
+    const timeDiff = Math.abs(playerTime - currentTime);
+    if (timeDiff > 1.5) {
       if (typeof playerRef.current.seekTo === 'function') {
+        // Mark that we're syncing from remote, so we don't fire onSeek
+        isSyncingRef.current = true;
+        lastSyncTimeRef.current = currentTime;
         playerRef.current.seekTo(currentTime, true);
+        
+        // Update prevTime to prevent false seek detection
+        prevTimeRef.current = currentTime;
+        
+        // Reset the syncing flag after the seek completes
+        setTimeout(() => {
+          isSyncingRef.current = false;
+        }, 500);
       }
     }
 
   }, [isPlaying, currentTime, isPlayerReady])
 
-  // Periodic time update for sync
+  // Fast polling for seek detection (local user seeking)
   useEffect(() => {
     if (!isPlayerReady) return;
 
     const interval = setInterval(() => {
-        if (playerRef.current && typeof playerRef.current.getCurrentTime === 'function') {
-            const time = playerRef.current.getCurrentTime();
-            if (onTimeUpdate) onTimeUpdate(time);
+        if (!playerRef.current || typeof playerRef.current.getCurrentTime !== 'function') return;
+        
+        const time = playerRef.current.getCurrentTime();
+        const diff = time - prevTimeRef.current;
+        const absDiff = Math.abs(diff);
+
+        // Detect local seek: time jumped more than expected (> 0.5s for 200ms interval)
+        // But ignore if we just did a remote sync
+        if (absDiff > 0.75 && !isSyncingRef.current) {
+            // Check if this is close to our last sync time (meaning it's the result of a remote sync)
+            const isNearSyncTime = Math.abs(time - lastSyncTimeRef.current) < 1;
+            
+            if (!isNearSyncTime && onSeek) {
+                console.log("Local seek detected:", time);
+                onSeek(time);
+            }
         }
-    }, 1000);
+
+        prevTimeRef.current = time;
+    }, 200);
+    
     return () => clearInterval(interval);
-  }, [onTimeUpdate, isPlayerReady]);
+  }, [onSeek, isPlayerReady]);
 
   return (
     <div className="w-full h-full bg-black flex items-center justify-center overflow-hidden rounded-xl">
