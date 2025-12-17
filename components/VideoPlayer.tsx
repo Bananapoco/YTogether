@@ -41,7 +41,6 @@ export function VideoPlayer({
 
     if (!playerRef.current) {
       try {
-        console.log("Initializing YT Player with ID:", videoId);
         playerRef.current = new window.YT.Player(containerRef.current, {
           height: '100%',
           width: '100%',
@@ -56,7 +55,6 @@ export function VideoPlayer({
           },
           events: {
             onReady: (event: any) => {
-              console.log("Player Ready");
               setIsPlayerReady(true);
               prevTimeRef.current = 0;
               if (onPlayerReady) onPlayerReady(event.target)
@@ -150,7 +148,6 @@ export function VideoPlayer({
             const isNearSyncTime = Math.abs(time - lastSyncTimeRef.current) < 1;
             
             if (!isNearSyncTime && onSeek) {
-                console.log("Local seek detected:", time);
                 onSeek(time);
             }
         }
@@ -162,8 +159,17 @@ export function VideoPlayer({
   }, [onSeek, isPlayerReady]);
 
   return (
-    <div className="w-full h-full bg-black flex items-center justify-center overflow-hidden rounded-xl">
+    <div className="w-full h-full bg-black flex items-center justify-center overflow-hidden rounded-xl relative">
         <div ref={containerRef} className="w-full h-full" />
+        
+        {!videoId && (
+            <div className="absolute inset-0 flex items-center justify-center bg-zinc-900 text-white z-10">
+                <div className="text-center p-6 max-w-md">
+                    <h3 className="text-xl font-bold mb-2">Ready to Watch?</h3>
+                    <p className="text-muted-foreground">Paste a YouTube link below to start the show!</p>
+                </div>
+            </div>
+        )}
     </div>
   )
 }

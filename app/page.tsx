@@ -57,10 +57,18 @@ export default function Home() {
     const roomId = generateRoomId()
     const name = creatorName.trim()
     
+    // Get or create user ID for the creator
+    let userId = sessionStorage.getItem("yt_user_id")
+    if (!userId) {
+      userId = Math.random().toString(36).substring(2, 9)
+      sessionStorage.setItem("yt_user_id", userId)
+    }
+    
     try {
       // Create room in Firebase
       await set(ref(db, `rooms/${roomId}`), {
         createdAt: serverTimestamp(),
+        creatorId: userId,
         isPlaying: false,
         currentTime: 0,
         // We don't set users here; the room page handles adding the user
@@ -256,11 +264,6 @@ export default function Home() {
           </div>
         </div>
       </main>
-
-      {/* Simple Footer */}
-      <footer className="py-6 text-center text-sm text-muted-foreground">
-        <p>Built for family movie nights ❤️</p>
-      </footer>
 
       {/* Create Room Dialog */}
       <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>

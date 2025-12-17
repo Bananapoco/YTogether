@@ -1,8 +1,8 @@
 "use client"
 
 import { useState, useEffect, useRef, useCallback } from "react"
-import { useSearchParams } from "next/navigation"
-import { ref, onValue, set, update, onDisconnect, serverTimestamp } from "firebase/database"
+import { useSearchParams, useRouter } from "next/navigation"
+import { ref, onValue, set, update, onDisconnect, serverTimestamp, remove } from "firebase/database"
 import { db } from "@/lib/firebase"
 import { VideoPlayer } from "@/components/VideoPlayer"
 import { VideoInput } from "@/components/VideoInput"
@@ -15,6 +15,7 @@ interface RoomClientProps {
 }
 
 export function RoomClient({ roomId }: RoomClientProps) {
+  const router = useRouter()
   const searchParams = useSearchParams()
   const [userId, setUserId] = useState<string>("")
   const username = searchParams.get("username") || "Anonymous"
@@ -31,6 +32,14 @@ export function RoomClient({ roomId }: RoomClientProps) {
   // Prevent circular updates
   const isRemoteUpdate = useRef(false)
   const lastSeekTime = useRef(0) // Debounce seeks
+  
+  // Track users ref for cleanup
+  const usersRefCurrent = useRef<Record<string, any>>({})
+
+  // Update users ref
+  useEffect(() => {
+    usersRefCurrent.current = roomState.users
+  }, [roomState.users])
 
   // Initialize User & Presence
   useEffect(() => {
@@ -57,6 +66,16 @@ export function RoomClient({ roomId }: RoomClientProps) {
 
     return () => {
       unsubscribeConnected()
+      // Remove self
+      remove(userRef)
+      
+      // Check if room is empty (excluding self)
+      if (usersRefCurrent.current) {
+        const remainingUsers = Object.keys(usersRefCurrent.current).filter(id => id !== currentUserId)
+        if (remainingUsers.length === 0) {
+           remove(ref(db, `rooms/${roomId}`))
+        }
+      }
     }
   }, [roomId, username])
 
@@ -83,13 +102,17 @@ export function RoomClient({ roomId }: RoomClientProps) {
           isPlaying: data.isPlaying || false,
           currentTime: adjustedTime,
           lastUpdate: data.lastUpdate || 0,
-          users: data.users || {}
+          users: data.users || {},
+          creatorId: data.creatorId
         })
         
         // Keep the flag true for a bit to prevent echo
         setTimeout(() => {
             isRemoteUpdate.current = false
         }, 300)
+      } else {
+        // Room deleted or invalid
+        router.push("/")
       }
     })
 
@@ -139,7 +162,6 @@ export function RoomClient({ roomId }: RoomClientProps) {
     if (now - lastSeekTime.current < 300) return
     lastSeekTime.current = now
 
-    console.log("Broadcasting seek to:", time)
     update(ref(db, `rooms/${roomId}`), {
       currentTime: time,
       isPlaying: true, // Force play after seek
@@ -183,7 +205,13 @@ export function RoomClient({ roomId }: RoomClientProps) {
 
       {/* Sidebar */}
       <aside className="w-full md:w-80 h-[40vh] md:h-full border-t md:border-t-0 md:border-l flex-shrink-0">
-        <RoomSidebar roomId={roomId} users={roomState.users} />
+        <RoomSidebar 
+          roomId={roomId} 
+          users={roomState.users}
+          currentUserId={userId}
+          currentUserName={username}
+          creatorId={roomState.creatorId}
+        />
       </aside>
     </div>
   )

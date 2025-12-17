@@ -21,7 +21,7 @@ export function UserList({ users }: UserListProps) {
         ) : (
           userList.map((user, index) => (
             <div 
-              key={index} // Use ID if available, using index fallback safely if data inconsistent
+              key={user.id || index}
               className={`flex items-center gap-3 p-2 rounded-md transition-colors ${
                 user.connected ? "bg-card/50" : "opacity-50"
               }`}

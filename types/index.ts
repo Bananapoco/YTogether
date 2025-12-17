@@ -5,7 +5,17 @@ export interface User {
   lastSeen?: number
 }
 
+export interface Comment {
+  id: string
+  userId: string
+  userName: string
+  content: string
+  timestamp: number
+  parentId?: string
+}
+
 export interface RoomState {
+  creatorId?: string
   videoId: string | null
   isPlaying: boolean
   currentTime: number
