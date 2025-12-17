@@ -3,15 +3,20 @@
 import { UserList } from "./UserList"
 import { Settings, Share2, LogOut } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Separator } from "@/components/ui/separator"
 import { useRouter } from "next/navigation"
+import { User } from "@/types"
 
-export function RoomSidebar({ roomId }: { roomId: string }) {
+interface RoomSidebarProps {
+  roomId: string
+  users?: Record<string, User>
+}
+
+export function RoomSidebar({ roomId, users = {} }: RoomSidebarProps) {
   const router = useRouter()
 
   const copyRoomLink = () => {
-    // In a real app, this would copy the full URL
-    navigator.clipboard.writeText(roomId)
+    const url = window.location.href
+    navigator.clipboard.writeText(url)
     // Could add toast here
   }
 
@@ -27,7 +32,7 @@ export function RoomSidebar({ roomId }: { roomId: string }) {
         <div className="flex gap-2 mt-2">
           <Button variant="outline" size="sm" className="flex-1 h-8 text-xs" onClick={copyRoomLink}>
             <Share2 className="mr-2 h-3 w-3" />
-            Copy Code
+            Copy Link
           </Button>
           <Button variant="ghost" size="icon" className="h-8 w-8">
             <Settings className="h-4 w-4" />
@@ -37,7 +42,7 @@ export function RoomSidebar({ roomId }: { roomId: string }) {
 
       {/* User List Area */}
       <div className="flex-1 p-4 overflow-y-auto">
-        <UserList />
+        <UserList users={users} />
       </div>
 
       {/* Footer Controls */}
@@ -54,4 +59,3 @@ export function RoomSidebar({ roomId }: { roomId: string }) {
     </div>
   )
 }
-

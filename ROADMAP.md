@@ -137,9 +137,9 @@ app
   - Input field + button
   - On submit: extract videoId → update Firebase room state (currently local state updates, Firebase in Phase 4)
 
-## Phase 4: Firebase Sync & State (2-3 hours)
+## Phase 4: Firebase Sync & State (2-3 hours) [COMPLETED]
 
-- Define Firebase structure:
+- [x] Define Firebase structure:
   ```
   /rooms
     /{roomId}
@@ -155,18 +155,18 @@ app
         }
       }
   ```
-- Create `types/index.ts` for RoomState
-- In `/room/[roomId]/page.tsx`
+- [x] Create `types/index.ts` for RoomState
+- [x] In `/room/[roomId]/page.tsx` (via `RoomClient.tsx`)
   - Generate random userId + prompt for name (use Dialog)
   - Connect to Firebase ref: `rooms/{roomId}`
   - `onValue` listener → update local state (videoId, isPlaying, currentTime)
   - On mount: set user `connected=true`, on disconnect: remove user
-- Sync logic in `VideoPlayer.tsx`
+- [x] Sync logic in `VideoPlayer.tsx`
   - When local state changes → control player (play/pause/seekTo)
   - On player state change (play/pause/buffer): if user initiated → update Firebase
   - Periodic sync: every 5s if playing, update currentTime in DB
   - On join mid-video: seek to currentTime
-- Password protection
+- [ ] Password protection (skipped for now, can add in Phase 5)
   - On join: read password from DB → compare → redirect if wrong
 
 ## Phase 5: Presence & Polish (1-2 hours)
