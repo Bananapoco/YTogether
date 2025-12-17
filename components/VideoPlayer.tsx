@@ -23,6 +23,7 @@ export function VideoPlayer({
   const playerRef = useRef<any>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const [isApiLoaded, setIsApiLoaded] = useState(false)
+  const [isPlayerReady, setIsPlayerReady] = useState(false)
 
   // Load the API script once
   useEffect(() => {
@@ -54,6 +55,7 @@ export function VideoPlayer({
           events: {
             onReady: (event: any) => {
               console.log("Player Ready");
+              setIsPlayerReady(true);
               if (onPlayerReady) onPlayerReady(event.target)
             },
             onStateChange: (event: any) => {
@@ -68,52 +70,71 @@ export function VideoPlayer({
         console.error("Failed to init player", e);
       }
     }
-    // We intentionally omit videoId/onPlayerReady/onStateChange to avoid re-initializing
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isApiLoaded])
 
   // Handle videoId changes
   useEffect(() => {
-    if (playerRef.current && videoId) {
-      const currentVideoId = playerRef.current.getVideoData?.()?.video_id;
-      if (currentVideoId !== videoId) {
-        playerRef.current.loadVideoById(videoId)
+    if (playerRef.current && isPlayerReady && videoId) {
+      // Check if we can call the method
+      if (typeof playerRef.current.getVideoData === 'function') {
+        const currentVideoId = playerRef.current.getVideoData()?.video_id;
+        if (currentVideoId !== videoId) {
+            if (typeof playerRef.current.loadVideoById === 'function') {
+                playerRef.current.loadVideoById(videoId)
+            }
+        }
       }
     }
-  }, [videoId])
+  }, [videoId, isPlayerReady])
 
   // Sync player state (play/pause/seek)
   useEffect(() => {
-    if (!playerRef.current || !playerRef.current.getPlayerState) return;
+    if (!playerRef.current || !isPlayerReady) return;
     
+    // Safety check for methods
+    if (typeof playerRef.current.getPlayerState !== 'function') return;
+
     const playerState = playerRef.current.getPlayerState();
-    const playerTime = playerRef.current.getCurrentTime();
+    
+    // Safety check for getCurrentTime
+    const playerTime = typeof playerRef.current.getCurrentTime === 'function' 
+        ? playerRef.current.getCurrentTime() 
+        : 0;
     
     // Sync Play/Pause
     // 1=playing, 3=buffering
     if (isPlaying && playerState !== 1 && playerState !== 3) { 
-      playerRef.current.playVideo();
+      if (typeof playerRef.current.playVideo === 'function') {
+        playerRef.current.playVideo();
+      }
     } else if (!isPlaying && playerState === 1) {
-      playerRef.current.pauseVideo();
+      if (typeof playerRef.current.pauseVideo === 'function') {
+        playerRef.current.pauseVideo();
+      }
     }
 
     // Sync Time (only if deviation > 2s to avoid jitter)
     if (Math.abs(playerTime - currentTime) > 2) {
-      playerRef.current.seekTo(currentTime, true);
+      if (typeof playerRef.current.seekTo === 'function') {
+        playerRef.current.seekTo(currentTime, true);
+      }
     }
 
-  }, [isPlaying, currentTime])
+  }, [isPlaying, currentTime, isPlayerReady])
 
   // Periodic time update for sync
   useEffect(() => {
+    if (!isPlayerReady) return;
+
     const interval = setInterval(() => {
-        if (playerRef.current && playerRef.current.getCurrentTime) {
+        if (playerRef.current && typeof playerRef.current.getCurrentTime === 'function') {
             const time = playerRef.current.getCurrentTime();
             if (onTimeUpdate) onTimeUpdate(time);
         }
     }, 1000);
     return () => clearInterval(interval);
-  }, [onTimeUpdate]);
+  }, [onTimeUpdate, isPlayerReady]);
 
   return (
     <div className="w-full h-full bg-black flex items-center justify-center overflow-hidden rounded-xl">

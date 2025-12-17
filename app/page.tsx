@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { Play, Users, Tv, ArrowRight, Video } from "lucide-react"
+import { Play, Users, Tv, ArrowRight, Video, AlertCircle } from "lucide-react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -16,17 +16,24 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
+import { ref, get, set, serverTimestamp } from "firebase/database"
+import { db } from "@/lib/firebase"
 
 export default function Home() {
   const router = useRouter()
   const [joinRoomId, setJoinRoomId] = useState("")
   const [joinPassword, setJoinPassword] = useState("")
   const [isJoining, setIsJoining] = useState(false)
+  const [joinError, setJoinError] = useState("")
   
   // Create Room State
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
   const [creatorName, setCreatorName] = useState("")
   const [isCreating, setIsCreating] = useState(false)
+
+  // Join Room Dialog State
+  const [isJoinDialogOpen, setIsJoinDialogOpen] = useState(false)
+  const [joinName, setJoinName] = useState("")
 
   // Generate random 6-character room ID
   const generateRoomId = () => {
@@ -42,7 +49,7 @@ export default function Home() {
     setIsCreateDialogOpen(true)
   }
 
-  const handleCreateSubmit = (e: React.FormEvent) => {
+  const handleCreateSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!creatorName.trim()) return
 
@@ -50,21 +57,61 @@ export default function Home() {
     const roomId = generateRoomId()
     const name = creatorName.trim()
     
-    // Navigate to room with username
-    router.push(`/room/${roomId}?username=${encodeURIComponent(name)}`)
+    try {
+      // Create room in Firebase
+      await set(ref(db, `rooms/${roomId}`), {
+        createdAt: serverTimestamp(),
+        isPlaying: false,
+        currentTime: 0,
+        // We don't set users here; the room page handles adding the user
+      })
+      
+      // Navigate to room with username
+      router.push(`/room/${roomId}?username=${encodeURIComponent(name)}`)
+    } catch (error) {
+      console.error("Error creating room:", error)
+      setIsCreating(false)
+      alert("Failed to create room. Please try again.")
+    }
   }
 
-  const handleJoinRoom = (e: React.FormEvent) => {
+  const handleJoinClick = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!joinRoomId.trim()) {
-      return
-    }
+    if (!joinRoomId.trim()) return
+    
+    setJoinError("")
     setIsJoining(true)
     const roomId = joinRoomId.trim().toUpperCase()
+
+    try {
+      // Check if room exists
+      const roomSnapshot = await get(ref(db, `rooms/${roomId}`))
+      
+      if (roomSnapshot.exists()) {
+        // Room exists, open name dialog
+        setIsJoinDialogOpen(true)
+        setIsJoining(false)
+      } else {
+        setJoinError("Room not found. Check the code and try again.")
+        setIsJoining(false)
+      }
+    } catch (error) {
+      console.error("Error checking room:", error)
+      setJoinError("Connection error. Please try again.")
+      setIsJoining(false)
+    }
+  }
+
+  const handleJoinSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!joinName.trim()) return
+
+    const roomId = joinRoomId.trim().toUpperCase()
     const password = joinPassword.trim()
-    
-    // Navigate to room - password validation will happen there
-    router.push(`/room/${roomId}${password ? `?password=${encodeURIComponent(password)}` : ""}`)
+    const name = joinName.trim()
+
+    // Navigate to room
+    router.push(`/room/${roomId}?username=${encodeURIComponent(name)}${password ? `&password=${encodeURIComponent(password)}` : ""}`)
   }
 
   return (
@@ -152,7 +199,7 @@ export default function Home() {
                 <CardDescription>Enter the code shared with you</CardDescription>
               </CardHeader>
               <CardContent>
-                <form onSubmit={handleJoinRoom} className="space-y-4">
+                <form onSubmit={handleJoinClick} className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="roomId">Room Code</Label>
                     <div className="flex gap-2">
@@ -160,7 +207,10 @@ export default function Home() {
                         id="roomId"
                         placeholder="ABC123"
                         value={joinRoomId}
-                        onChange={(e) => setJoinRoomId(e.target.value.toUpperCase())}
+                        onChange={(e) => {
+                          setJoinRoomId(e.target.value.toUpperCase())
+                          setJoinError("")
+                        }}
                         maxLength={6}
                         className="uppercase font-mono tracking-widest text-lg h-11"
                         required
@@ -178,6 +228,12 @@ export default function Home() {
                         )}
                       </Button>
                     </div>
+                    {joinError && (
+                      <p className="text-sm text-destructive flex items-center gap-1 animate-in slide-in-from-top-1">
+                        <AlertCircle className="h-3 w-3" />
+                        {joinError}
+                      </p>
+                    )}
                   </div>
                   
                   {joinRoomId.length > 0 && (
@@ -218,9 +274,9 @@ export default function Home() {
           <form onSubmit={handleCreateSubmit}>
             <div className="grid gap-4 py-4">
               <div className="grid gap-2">
-                <Label htmlFor="name">Your Name</Label>
+                <Label htmlFor="create-name">Your Name</Label>
                 <Input
-                  id="name"
+                  id="create-name"
                   value={creatorName}
                   onChange={(e) => setCreatorName(e.target.value)}
                   placeholder="e.g. Alex"
@@ -233,6 +289,39 @@ export default function Home() {
             <DialogFooter>
               <Button type="submit" disabled={isCreating || !creatorName.trim()}>
                 {isCreating ? "Creating..." : "Start Party"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Join Room Dialog */}
+      <Dialog open={isJoinDialogOpen} onOpenChange={setIsJoinDialogOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Join Room {joinRoomId}</DialogTitle>
+            <DialogDescription>
+              Enter your name to join the party.
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleJoinSubmit}>
+            <div className="grid gap-4 py-4">
+              <div className="grid gap-2">
+                <Label htmlFor="join-name">Your Name</Label>
+                <Input
+                  id="join-name"
+                  value={joinName}
+                  onChange={(e) => setJoinName(e.target.value)}
+                  placeholder="e.g. Sam"
+                  className="col-span-3"
+                  autoFocus
+                  required
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button type="submit" disabled={!joinName.trim()}>
+                Join Party
               </Button>
             </DialogFooter>
           </form>
