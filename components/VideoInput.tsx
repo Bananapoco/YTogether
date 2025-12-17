@@ -5,7 +5,6 @@ import { Search } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { extractVideoId } from "@/lib/youtube"
-import { useToast } from "@/hooks/use-toast" // Use standard toast if available, or just console/alert for now
 
 interface VideoInputProps {
   onVideoId: (id: string) => void
