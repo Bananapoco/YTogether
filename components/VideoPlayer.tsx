@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useRef, useState, useCallback } from "react"
+import { useEffect, useRef, useState } from "react"
 import { loadYouTubeScript } from "@/lib/youtube"
 
 interface VideoPlayerProps {
@@ -73,7 +73,6 @@ export function VideoPlayer({
         console.error("Failed to init player", e);
       }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isApiLoaded])
 
   // Handle videoId changes

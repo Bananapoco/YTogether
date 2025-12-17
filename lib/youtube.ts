@@ -10,7 +10,6 @@ export const loadYouTubeScript = (): Promise<void> => {
     const firstScriptTag = document.getElementsByTagName("script")[0];
     firstScriptTag.parentNode?.insertBefore(tag, firstScriptTag);
 
-    // @ts-expect-error - YT API attaches to window
     window.onYouTubeIframeAPIReady = () => {
       resolve();
     };
