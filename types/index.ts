@@ -21,4 +21,6 @@ export interface RoomState {
   currentTime: number
   lastUpdate: number
   users: Record<string, User>
+  isPausedByDisconnect?: boolean
+  offlineUserName?: string
 }

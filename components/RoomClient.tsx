@@ -2,13 +2,14 @@
 
 import { useState, useEffect, useRef, useCallback } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
-import { ref, onValue, set, update, onDisconnect, serverTimestamp, remove } from "firebase/database"
+import { ref, onValue, set, update, onDisconnect, serverTimestamp, remove, get } from "firebase/database"
 import { db } from "@/lib/firebase"
 import { VideoPlayer } from "@/components/VideoPlayer"
 import { VideoInput } from "@/components/VideoInput"
 import { RoomSidebar } from "@/components/RoomSidebar"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { RoomState } from "@/types"
+import { WifiOff, Loader2 } from "lucide-react"
 
 interface RoomClientProps {
   roomId: string
@@ -55,8 +56,14 @@ export function RoomClient({ roomId }: RoomClientProps) {
 
     const unsubscribeConnected = onValue(connectedRef, (snap) => {
       if (snap.val() === true) {
-        onDisconnect(userRef).remove()
+        // When user loses connection, mark as offline but keep entry
+        onDisconnect(userRef).update({ 
+          connected: false,
+          lastSeen: serverTimestamp() 
+        })
+        
         set(userRef, {
+            id: currentUserId,
             name: username,
             connected: true,
             lastSeen: serverTimestamp()
@@ -66,7 +73,7 @@ export function RoomClient({ roomId }: RoomClientProps) {
 
     return () => {
       unsubscribeConnected()
-      // Remove self
+      // On unmount (intentional leave), remove the user entry entirely
       remove(userRef)
       
       // Check if room is empty (excluding self)
@@ -103,7 +110,9 @@ export function RoomClient({ roomId }: RoomClientProps) {
           currentTime: adjustedTime,
           lastUpdate: data.lastUpdate || 0,
           users: data.users || {},
-          creatorId: data.creatorId
+          creatorId: data.creatorId,
+          isPausedByDisconnect: data.isPausedByDisconnect || false,
+          offlineUserName: data.offlineUserName
         })
         
         // Keep the flag true for a bit to prevent echo
@@ -118,6 +127,33 @@ export function RoomClient({ roomId }: RoomClientProps) {
 
     return () => unsubscribe()
   }, [roomId])
+
+  // Monitor user connectivity to handle automatic pause/resume
+  useEffect(() => {
+    if (!userId || !roomState.users) return
+
+    const users = Object.values(roomState.users)
+    const offlineUser = users.find(u => u.connected === false)
+    const allOnline = users.every(u => u.connected === true)
+
+    if (offlineUser && roomState.isPlaying && !roomState.isPausedByDisconnect) {
+      // Someone went offline while playing - PAUSE
+      update(ref(db, `rooms/${roomId}`), {
+        isPlaying: false,
+        isPausedByDisconnect: true,
+        offlineUserName: offlineUser.name,
+        lastUpdate: serverTimestamp()
+      })
+    } else if (allOnline && roomState.isPausedByDisconnect) {
+      // Everyone is back online - RESUME
+      update(ref(db, `rooms/${roomId}`), {
+        isPlaying: true,
+        isPausedByDisconnect: false,
+        offlineUserName: null,
+        lastUpdate: serverTimestamp()
+      })
+    }
+  }, [roomState.users, roomState.isPlaying, roomState.isPausedByDisconnect, roomId, userId])
 
   // Handle new video
   const handleVideoId = useCallback((id: string) => {
@@ -184,9 +220,9 @@ export function RoomClient({ roomId }: RoomClientProps) {
         </div>
 
         {/* Video Section */}
-        <div className="flex-1 flex flex-col items-center justify-center p-4 md:p-8 gap-6 overflow-y-auto">
+        <div className="flex-1 flex flex-col items-center justify-center p-4 md:p-8 gap-6 overflow-y-auto relative">
           
-          <div className="w-full max-w-5xl aspect-video bg-black rounded-xl shadow-2xl overflow-hidden ring-1 ring-white/10">
+          <div className="w-full max-w-5xl aspect-video bg-black rounded-xl shadow-2xl overflow-hidden ring-1 ring-white/10 relative">
             <VideoPlayer 
               videoId={roomState.videoId}
               isPlaying={roomState.isPlaying}
@@ -194,6 +230,28 @@ export function RoomClient({ roomId }: RoomClientProps) {
               onStateChange={handlePlayerStateChange}
               onSeek={handleSeek}
             />
+
+            {/* Connection Lost Overlay */}
+            {roomState.isPausedByDisconnect && (
+              <div className="absolute inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm animate-in fade-in duration-300">
+                <div className="flex flex-col items-center gap-4 p-8 rounded-2xl bg-card border shadow-2xl max-w-sm text-center">
+                  <div className="p-4 bg-destructive/10 rounded-full animate-pulse">
+                    <WifiOff className="h-10 w-10 text-destructive" />
+                  </div>
+                  <div className="space-y-2">
+                    <h3 className="text-xl font-bold">Connection Interrupted</h3>
+                    <p className="text-muted-foreground text-sm">
+                      Waiting for <span className="font-semibold text-foreground">{roomState.offlineUserName || "a member"}</span> to reconnect. 
+                      Playback will resume automatically.
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground pt-2">
+                    <Loader2 className="h-3 w-3 animate-spin" />
+                    <span>Syncing states...</span>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="w-full max-w-3xl">

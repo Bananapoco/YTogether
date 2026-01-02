@@ -60,6 +60,13 @@ export function VideoPlayer({
               if (onPlayerReady) onPlayerReady(event.target)
             },
             onStateChange: (event: any) => {
+              // Handle seek detection on state changes (BUFFERING usually precedes a seek)
+              if (event.data === window.YT.PlayerState.BUFFERING) {
+                const time = event.target.getCurrentTime();
+                if (!isSyncingRef.current && onSeek) {
+                  onSeek(time);
+                }
+              }
               if (onStateChange) onStateChange(event)
             },
             onError: (event: any) => {
@@ -118,9 +125,6 @@ export function VideoPlayer({
         lastSyncTimeRef.current = currentTime;
         playerRef.current.seekTo(currentTime, true);
         
-        // Update prevTime to prevent false seek detection
-        prevTimeRef.current = currentTime;
-        
         // Reset the syncing flag after the seek completes
         setTimeout(() => {
           isSyncingRef.current = false;
@@ -130,33 +134,29 @@ export function VideoPlayer({
 
   }, [isPlaying, currentTime, isPlayerReady])
 
-  // Fast polling for seek detection (local user seeking)
-  useEffect(() => {
-    if (!isPlayerReady) return;
+  // Event-driven state change handling for seek detection
+  const handleStateChangeInternal = (event: any) => {
+    if (!isPlayerReady || isSyncingRef.current) {
+      if (onStateChange) onStateChange(event);
+      return;
+    }
 
-    const interval = setInterval(() => {
-        if (!playerRef.current || typeof playerRef.current.getCurrentTime !== 'function') return;
-        
-        const time = playerRef.current.getCurrentTime();
-        const diff = time - prevTimeRef.current;
-        const absDiff = Math.abs(diff);
-
-        // Detect local seek: time jumped more than expected (> 0.5s for 200ms interval)
-        // But ignore if we just did a remote sync
-        if (absDiff > 0.75 && !isSyncingRef.current) {
-            // Check if this is close to our last sync time (meaning it's the result of a remote sync)
-            const isNearSyncTime = Math.abs(time - lastSyncTimeRef.current) < 1;
-            
-            if (!isNearSyncTime && onSeek) {
-                onSeek(time);
-            }
-        }
-
-        prevTimeRef.current = time;
-    }, 200);
-    
-    return () => clearInterval(interval);
-  }, [onSeek, isPlayerReady]);
+    // When the user seeks, the player usually enters BUFFERING (3)
+    // We can check the time when it returns to PLAYING (1) or PAUSED (2)
+    // or when it starts buffering.
+    if (event.data === 1 || event.data === 2 || event.data === 3) {
+      const currentTime = event.target.getCurrentTime();
+      // Check if this time is significantly different from what we expect
+      // If we are not syncing, and the time jumped, it's a local seek
+      const lastSyncDiff = Math.abs(currentTime - lastSyncTimeRef.current);
+      
+      // If it's a buffering state, we might want to wait until it's playing again
+      // but for now let's just use the state change as the trigger
+      if (onStateChange) onStateChange(event);
+    } else {
+      if (onStateChange) onStateChange(event);
+    }
+  };
 
   return (
     <div className="w-full h-full bg-black flex items-center justify-center overflow-hidden rounded-xl relative">

@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { UserList } from "./UserList"
 import { Comments } from "./Comments"
-import { Settings, Share2, LogOut, MessageSquare, Users, Power } from "lucide-react"
+import { Settings, Share2, LogOut, MessageSquare, Users, Power, Check } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useRouter } from "next/navigation"
 import { User } from "@/types"
@@ -22,13 +22,20 @@ interface RoomSidebarProps {
 export function RoomSidebar({ roomId, users = {}, currentUserId, currentUserName, creatorId }: RoomSidebarProps) {
   const router = useRouter()
   const [activeTab, setActiveTab] = useState<"users" | "comments">("users")
+  const [isCopied, setIsCopied] = useState(false)
 
   const currentUser = users[currentUserId]
   const isHost = currentUserId === creatorId
 
-  const copyRoomLink = () => {
+  const copyRoomLink = async () => {
     const url = window.location.href
-    navigator.clipboard.writeText(url)
+    try {
+      await navigator.clipboard.writeText(url)
+      setIsCopied(true)
+      setTimeout(() => setIsCopied(false), 2000)
+    } catch (err) {
+      console.error("Failed to copy link:", err)
+    }
   }
 
   const leaveRoom = () => {
@@ -53,9 +60,26 @@ export function RoomSidebar({ roomId, users = {}, currentUserId, currentUserName
           </Button>
         </div>
         
-        <Button variant="outline" size="sm" className="w-full h-8 text-xs" onClick={copyRoomLink}>
-          <Share2 className="mr-2 h-3 w-3" />
-          Copy Link
+        <Button 
+          variant="outline" 
+          size="sm" 
+          className={cn(
+            "w-full h-8 text-xs transition-all",
+            isCopied && "bg-primary text-primary-foreground border-primary"
+          )} 
+          onClick={copyRoomLink}
+        >
+          {isCopied ? (
+            <>
+              <Check className="mr-2 h-3 w-3" />
+              Copied!
+            </>
+          ) : (
+            <>
+              <Share2 className="mr-2 h-3 w-3" />
+              Copy Link
+            </>
+          )}
         </Button>
 
         {/* Tabs */}
