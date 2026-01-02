@@ -1,6 +1,6 @@
 # YTogether: Real-time Synchronized YouTube Watch Party
 
-A seamless web application that allows friends to watch YouTube videos together in perfect sync, featuring real-time playback control and presence tracking.
+A web application that allows friends to watch YouTube videos together in sync, featuring real-time playback control and presence tracking.
 
 ## Key Features
 - **Real-time Playback Sync**: Leverages Firebase Realtime Database to synchronize play/pause states and seek positions across all participants
