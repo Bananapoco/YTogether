@@ -19,6 +19,8 @@ Firebase Realtime Database (Presence & State Sync)
 ### Media
 YouTube IFrame Player API
 
+Future updates include replacing Firebase with Convex for improved syncronization
+
 <img src="github_screenshots/menu.png" height="400" alt="github_screenshots"/>
 <img src="github_screenshots/video.png" height="400" alt="github_screenshots"/>
 
