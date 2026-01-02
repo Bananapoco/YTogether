@@ -19,5 +19,5 @@ Firebase Realtime Database (Presence & State Sync)
 ### Media
 YouTube IFrame Player API
 
-<img src="github_screenshots/video.png" height="400" alt="github_screenshots"/>
-<img src="github_screenshots/menu.png" height="400" alt="github_screenshots"/>
+<img src="github_screenshots/video.png" height="400" alt="Watch party page"/>
+<img src="github_screenshots/menu.png" height="400" alt="Menu page"/>
