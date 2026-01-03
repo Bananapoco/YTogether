@@ -10,13 +10,14 @@ A web application that allows friends to watch YouTube videos together in sync, 
 - **Chat**: Talk about the video in the chat section!
 
 ## Tech Stack
-### Frontend
+
+**Frontend**
 Next.js 14, React, Tailwind CSS, Lucide React, Shadcn/UI (Radix)
 
-### Backend/Database
+**Backend/Database**
 Firebase
 
-### Media
+**Media**
 YouTube IFrame Player API
 
 Future updates include replacing Firebase with Convex for improved syncronization
