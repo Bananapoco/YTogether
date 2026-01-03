@@ -21,5 +21,5 @@ YouTube IFrame Player API
 
 Future updates include replacing Firebase with Convex for improved syncronization
 
-<img src="github_screenshots/video.png" height="400" alt="Watch party page"/>
-<img src="github_screenshots/menu.png" height="400" alt="Menu page"/>
+<img src="github_screenshots/video.png" height="400" alt="screenshot"/>
+<img src="github_screenshots/menu.png" height="400" alt="screenshot"/>
