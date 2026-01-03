@@ -14,7 +14,7 @@ A web application that allows friends to watch YouTube videos together in sync, 
 Next.js 14, React, Tailwind CSS, Lucide React, Shadcn/UI (Radix)
 
 ### Backend/Database
-Firebase Realtime Database (Presence & State Sync)
+Firebase
 
 ### Media
 YouTube IFrame Player API
