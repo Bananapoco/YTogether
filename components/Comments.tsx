@@ -1,9 +1,8 @@
 "use client"
 
 import { useState, useEffect, useRef } from "react"
-import { ref, push, onValue, set, serverTimestamp } from "firebase/database"
-import { db } from "@/lib/firebase"
-import { Comment } from "@/types"
+import type { ChatMessage } from "@/features/room/types"
+import { sendMessage, subscribeToMessages } from "@/features/room/room-store"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { User, MessageSquare, Reply, X } from "lucide-react"
@@ -16,50 +15,31 @@ interface CommentsProps {
 }
 
 export function Comments({ roomId, userId, userName }: CommentsProps) {
-  const [comments, setComments] = useState<Comment[]>([])
+  const [comments, setComments] = useState<ChatMessage[]>([])
   const [newComment, setNewComment] = useState("")
-  const [replyTo, setReplyTo] = useState<Comment | null>(null)
+  const [replyTo, setReplyTo] = useState<ChatMessage | null>(null)
   
   // Load comments
   useEffect(() => {
-    const commentsRef = ref(db, `rooms/${roomId}/comments`)
-    const unsubscribe = onValue(commentsRef, (snapshot) => {
-      const data = snapshot.val()
-      if (data) {
-        const commentList = Object.values(data) as Comment[]
-        setComments(commentList.sort((a, b) => a.timestamp - b.timestamp))
-      } else {
-        setComments([])
-      }
-    })
-    return () => unsubscribe()
+    return subscribeToMessages(roomId, setComments)
   }, [roomId])
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!newComment.trim()) return
 
-    const commentsRef = ref(db, `rooms/${roomId}/comments`)
-    const newCommentRef = push(commentsRef)
-    
-    const comment: Comment = {
-      id: newCommentRef.key!,
+    await sendMessage(roomId, {
       userId,
       userName,
       content: newComment.trim(),
-      timestamp: Date.now()
-    }
+      ...(replyTo?.id ? { parentId: replyTo.id } : {}),
+    })
 
-    if (replyTo?.id) {
-      comment.parentId = replyTo.id
-    }
-
-    set(newCommentRef, comment)
     setNewComment("")
     setReplyTo(null)
   }
 
-  const handleReply = (comment: Comment) => {
+  const handleReply = (comment: ChatMessage) => {
     setReplyTo(comment)
   }
 
@@ -70,7 +50,7 @@ export function Comments({ roomId, userId, userName }: CommentsProps) {
   const rootComments = comments.filter(c => !c.parentId)
   const getReplies = (parentId: string) => comments.filter(c => c.parentId === parentId)
 
-  const CommentItem = ({ comment, isReply = false }: { comment: Comment, isReply?: boolean }) => (
+  const CommentItem = ({ comment, isReply = false }: { comment: ChatMessage, isReply?: boolean }) => (
     <div className={cn("flex gap-3", isReply && "ml-8 mt-2")}>
       <div className="flex-shrink-0 h-8 w-8 rounded-full bg-primary/20 flex items-center justify-center text-xs font-medium text-primary">
         {getInitials(comment.userName)}

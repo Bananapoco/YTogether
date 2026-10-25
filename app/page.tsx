@@ -16,13 +16,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import { ref, get, set, serverTimestamp } from "firebase/database"
-import { db } from "@/lib/firebase"
+import { getParticipantId } from "@/features/room/participant"
+import { createRoom, roomExists } from "@/features/room/room-store"
 
 export default function Home() {
   const router = useRouter()
   const [joinRoomId, setJoinRoomId] = useState("")
-  const [joinPassword, setJoinPassword] = useState("")
   const [isJoining, setIsJoining] = useState(false)
   const [joinError, setJoinError] = useState("")
   
@@ -57,24 +56,8 @@ export default function Home() {
     const roomId = generateRoomId()
     const name = creatorName.trim()
     
-    // Get or create user ID for the creator
-    let userId = sessionStorage.getItem("yt_user_id")
-    if (!userId) {
-      userId = Math.random().toString(36).substring(2, 9)
-      sessionStorage.setItem("yt_user_id", userId)
-    }
-    
     try {
-      // Create room in Firebase
-      await set(ref(db, `rooms/${roomId}`), {
-        createdAt: serverTimestamp(),
-        creatorId: userId,
-        isPlaying: false,
-        currentTime: 0,
-        // We don't set users here; the room page handles adding the user
-      })
-      
-      // Navigate to room with username
+      await createRoom(roomId, getParticipantId())
       router.push(`/room/${roomId}?username=${encodeURIComponent(name)}`)
     } catch (error) {
       console.error("Error creating room:", error)
@@ -92,11 +75,7 @@ export default function Home() {
     const roomId = joinRoomId.trim().toUpperCase()
 
     try {
-      // Check if room exists
-      const roomSnapshot = await get(ref(db, `rooms/${roomId}`))
-      
-      if (roomSnapshot.exists()) {
-        // Room exists, open name dialog
+      if (await roomExists(roomId)) {
         setIsJoinDialogOpen(true)
         setIsJoining(false)
       } else {
@@ -115,11 +94,9 @@ export default function Home() {
     if (!joinName.trim()) return
 
     const roomId = joinRoomId.trim().toUpperCase()
-    const password = joinPassword.trim()
     const name = joinName.trim()
 
-    // Navigate to room
-    router.push(`/room/${roomId}?username=${encodeURIComponent(name)}${password ? `&password=${encodeURIComponent(password)}` : ""}`)
+    router.push(`/room/${roomId}?username=${encodeURIComponent(name)}`)
   }
 
   return (
@@ -244,19 +221,6 @@ export default function Home() {
                     )}
                   </div>
                   
-                  {joinRoomId.length > 0 && (
-                     <div className="animate-in fade-in slide-in-from-top-1 duration-200">
-                      <Label htmlFor="password" className="text-xs text-muted-foreground">Password (if required)</Label>
-                      <Input
-                        id="password"
-                        type="password"
-                        placeholder="Optional password"
-                        value={joinPassword}
-                        onChange={(e) => setJoinPassword(e.target.value)}
-                        className="h-9 mt-1"
-                      />
-                    </div>
-                  )}
                 </form>
               </CardContent>
             </Card>

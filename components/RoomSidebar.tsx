@@ -3,13 +3,12 @@
 import { useState } from "react"
 import { UserList } from "./UserList"
 import { Comments } from "./Comments"
-import { Settings, Share2, LogOut, MessageSquare, Users, Power, Check } from "lucide-react"
+import { Share2, LogOut, MessageSquare, Users, Power, Check } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useRouter } from "next/navigation"
 import { User } from "@/types"
-import { remove, ref } from "firebase/database"
-import { db } from "@/lib/firebase"
 import { cn } from "@/lib/utils"
+import { closeRoom as removeRoom } from "@/features/room/room-store"
 
 interface RoomSidebarProps {
   roomId: string
@@ -42,10 +41,9 @@ export function RoomSidebar({ roomId, users = {}, currentUserId, currentUserName
     router.push("/")
   }
 
-  const closeRoom = async () => {
+  const handleCloseRoom = async () => {
     if (confirm("Are you sure you want to close this room? Everyone will be disconnected.")) {
-      await remove(ref(db, `rooms/${roomId}`))
-      // Navigation handled by RoomClient detecting room deletion
+      await removeRoom(roomId)
     }
   }
 
@@ -53,11 +51,8 @@ export function RoomSidebar({ roomId, users = {}, currentUserId, currentUserName
     <div className="flex flex-col h-full bg-card border-l">
       {/* Room Info Header */}
       <div className="p-4 border-b space-y-3">
-        <div className="flex items-center justify-between">
+        <div>
           <h2 className="font-bold text-lg">Room {roomId}</h2>
-          <Button variant="ghost" size="icon" className="h-8 w-8">
-            <Settings className="h-4 w-4" />
-          </Button>
         </div>
         
         <Button 
@@ -137,7 +132,7 @@ export function RoomSidebar({ roomId, users = {}, currentUserId, currentUserName
           <Button 
             variant="outline" 
             className="w-full justify-start text-destructive hover:text-destructive hover:bg-destructive/10 border-destructive/20"
-            onClick={closeRoom}
+            onClick={handleCloseRoom}
           >
             <Power className="mr-2 h-4 w-4" />
             Close Room
