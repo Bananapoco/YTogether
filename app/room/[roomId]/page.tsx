@@ -1,4 +1,4 @@
-import { RoomClient } from "@/components/RoomClient"
+import { RoomClient } from "@/features/room/room-client"
 
 interface PageProps {
   params: Promise<{
