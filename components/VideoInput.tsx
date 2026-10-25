@@ -4,7 +4,7 @@ import { useState } from "react"
 import { Search } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { extractVideoId } from "@/lib/youtube"
+import { extractVideoId } from "@/features/playback/youtube-api"
 
 interface VideoInputProps {
   onVideoId: (id: string) => void
@@ -12,10 +12,6 @@ interface VideoInputProps {
 
 export function VideoInput({ onVideoId }: VideoInputProps) {
   const [url, setUrl] = useState("")
-  // We don't have the toast hook set up in the codebase yet based on file list (only shadcn components), 
-  // checking components/ui... wait, I added shadcn components but maybe not the toast hook/component explicitly?
-  // I'll stick to simple validation for now or check if toast exists.
-
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     if (!url.trim()) return
@@ -25,7 +21,6 @@ export function VideoInput({ onVideoId }: VideoInputProps) {
       onVideoId(videoId)
       setUrl("")
     } else {
-      // For now, just a browser alert or non-blocking UI
       alert("Invalid YouTube URL")
     }
   }

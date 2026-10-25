@@ -7,7 +7,10 @@ import { Loader2, WifiOff } from "lucide-react"
 import { RoomSidebar } from "@/components/RoomSidebar"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { VideoInput } from "@/components/VideoInput"
-import { VideoPlayer } from "@/components/VideoPlayer"
+import {
+  YouTubePlayer,
+  type PlaybackChange,
+} from "@/features/playback/youtube-player"
 import { getParticipantId } from "@/features/room/participant"
 import {
   connectParticipant,
@@ -89,23 +92,13 @@ export function RoomClient({ roomId }: RoomClientProps) {
     [roomId],
   )
 
-  const handlePlayerStateChange = useCallback(
-    (event: YT.OnStateChangeEvent) => {
+  const handlePlaybackChange = useCallback(
+    (playback: PlaybackChange) => {
       if (isApplyingRemoteUpdate.current) {
         return
       }
 
-      if (event.data === YT.PlayerState.PLAYING) {
-        void updatePlayback(roomId, {
-          isPlaying: true,
-          currentTime: event.target.getCurrentTime(),
-        })
-      } else if (event.data === YT.PlayerState.PAUSED) {
-        void updatePlayback(roomId, {
-          isPlaying: false,
-          currentTime: event.target.getCurrentTime(),
-        })
-      }
+      void updatePlayback(roomId, playback)
     },
     [roomId],
   )
@@ -135,11 +128,11 @@ export function RoomClient({ roomId }: RoomClientProps) {
 
         <div className="relative flex flex-1 flex-col items-center justify-center gap-6 overflow-y-auto p-4 md:p-8">
           <div className="relative aspect-video w-full max-w-5xl overflow-hidden rounded-xl bg-black shadow-2xl ring-1 ring-white/10">
-            <VideoPlayer
+            <YouTubePlayer
               videoId={room.videoId}
               isPlaying={room.isPlaying}
               currentTime={room.currentTime}
-              onStateChange={handlePlayerStateChange}
+              onPlaybackChange={handlePlaybackChange}
               onSeek={handleSeek}
             />
 
