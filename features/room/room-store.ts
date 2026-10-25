@@ -15,15 +15,31 @@ import { db } from "@/lib/firebase"
 import type { ChatMessage, Participant, RoomState } from "./types"
 
 const roomPath = (roomId: string) => `rooms/${roomId}`
+const ROOM_CODE_CHARACTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 
-export async function createRoom(roomId: string, creatorId: string) {
-  await set(ref(db, roomPath(roomId)), {
-    createdAt: serverTimestamp(),
-    creatorId,
-    isPlaying: false,
-    currentTime: 0,
-    lastUpdate: serverTimestamp(),
-  })
+export async function createRoom(creatorId: string): Promise<string> {
+  for (let attempt = 0; attempt < 5; attempt += 1) {
+    const roomId = generateRoomId()
+    const result = await runTransaction(ref(db, roomPath(roomId)), (existingRoom) => {
+      if (existingRoom) {
+        return
+      }
+
+      return {
+        createdAt: serverTimestamp(),
+        creatorId,
+        isPlaying: false,
+        currentTime: 0,
+        lastUpdate: serverTimestamp(),
+      }
+    })
+
+    if (result.committed) {
+      return roomId
+    }
+  }
+
+  throw new Error("Could not reserve a room code")
 }
 
 export async function roomExists(roomId: string) {
@@ -166,4 +182,11 @@ export async function sendMessage(
     id: messageRef.key,
     timestamp: Date.now(),
   })
+}
+
+function generateRoomId() {
+  return Array.from({ length: 6 }, () => {
+    const index = Math.floor(Math.random() * ROOM_CODE_CHARACTERS.length)
+    return ROOM_CODE_CHARACTERS[index]
+  }).join("")
 }
