@@ -106,15 +106,8 @@ export function connectParticipant(
   })
 }
 
-export async function leaveRoom(roomId: string, participantId: string) {
+export async function disconnectParticipant(roomId: string, participantId: string) {
   await remove(ref(db, `${roomPath(roomId)}/users/${participantId}`))
-
-  await runTransaction(ref(db, roomPath(roomId)), (room) => {
-    if (!room || Object.keys(room.users ?? {}).length === 0) {
-      return null
-    }
-    return room
-  })
 }
 
 export async function closeRoom(roomId: string) {

@@ -6,7 +6,7 @@ import type { PlaybackChange } from "@/features/playback/youtube-player"
 import { getParticipantId } from "./participant"
 import {
   connectParticipant,
-  leaveRoom,
+  disconnectParticipant,
   pauseForParticipant,
   resumeAfterReconnect,
   selectVideo,
@@ -20,50 +20,41 @@ export function useRoomSession(
   participantName: string,
   onRoomRemoved: () => void,
 ) {
-  const [participantId, setParticipantId] = useState("")
+  const [participantId] = useState(() =>
+    typeof window === "undefined" ? "" : getParticipantId(),
+  )
   const [room, setRoom] = useState<RoomState>(EMPTY_ROOM_STATE)
-  const isApplyingRemoteUpdate = useRef(false)
   const lastSeekAt = useRef(0)
   const onRoomRemovedRef = useRef(onRoomRemoved)
 
-  onRoomRemovedRef.current = onRoomRemoved
+  useEffect(() => {
+    onRoomRemovedRef.current = onRoomRemoved
+  }, [onRoomRemoved])
 
   useEffect(() => {
-    const id = getParticipantId()
-    setParticipantId(id)
+    if (!participantId) {
+      return
+    }
 
     const disconnectPresence = connectParticipant(roomId, {
-      id,
+      id: participantId,
       name: participantName,
     })
 
     return () => {
       disconnectPresence()
-      void leaveRoom(roomId, id)
+      void disconnectParticipant(roomId, participantId)
     }
-  }, [participantName, roomId])
+  }, [participantId, participantName, roomId])
 
   useEffect(() => {
-    let resetRemoteUpdateTimer: ReturnType<typeof setTimeout> | undefined
-
     const unsubscribe = subscribeToRoom(
       roomId,
-      (nextRoom) => {
-        isApplyingRemoteUpdate.current = true
-        setRoom(nextRoom)
-
-        clearTimeout(resetRemoteUpdateTimer)
-        resetRemoteUpdateTimer = setTimeout(() => {
-          isApplyingRemoteUpdate.current = false
-        }, 300)
-      },
+      setRoom,
       () => onRoomRemovedRef.current(),
     )
 
-    return () => {
-      clearTimeout(resetRemoteUpdateTimer)
-      unsubscribe()
-    }
+    return unsubscribe
   }, [roomId])
 
   useEffect(() => {
@@ -75,6 +66,14 @@ export function useRoomSession(
     const offlineParticipant = participants.find((participant) => !participant.connected)
     const everyoneIsOnline =
       participants.length > 0 && participants.every((participant) => participant.connected)
+    const coordinatorId = participants
+      .filter((participant) => participant.connected)
+      .map((participant) => participant.id)
+      .sort()[0]
+
+    if (participantId !== coordinatorId) {
+      return
+    }
 
     if (offlineParticipant && room.isPlaying && !room.pausedForParticipant) {
       void pauseForParticipant(roomId, offlineParticipant.name)
@@ -89,17 +88,13 @@ export function useRoomSession(
   )
 
   const changePlayback = useCallback(
-    (playback: PlaybackChange) => {
-      if (!isApplyingRemoteUpdate.current) {
-        void updatePlayback(roomId, playback)
-      }
-    },
+    (playback: PlaybackChange) => void updatePlayback(roomId, playback),
     [roomId],
   )
 
   const seek = useCallback(
     (currentTime: number) => {
-      if (isApplyingRemoteUpdate.current || Date.now() - lastSeekAt.current < 300) {
+      if (Date.now() - lastSeekAt.current < 300) {
         return
       }
 

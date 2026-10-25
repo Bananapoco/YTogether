@@ -1,23 +1,43 @@
-# YTogether: Real-time Synchronized YouTube Watch Party
+# YTogether
 
-A seamless web application that allows friends to watch YouTube videos together in perfect sync, featuring real-time playback control and presence tracking.
+YTogether is a real-time YouTube watch party app. Create a room, share the link, and keep playback synchronized while participants chat and come and go.
 
-## Key Features
-- **Real-time Playback Sync**: Leverages Firebase Realtime Database to synchronize play/pause states and seek positions across all participants
-- **Dynamic Presence System**: Implements a connection tracking system that shows active participants in real-time and handles automatic room cleanup when empty.
-- **Frictionless Room Management**: Unique 6-character room codes allow for instant "party" creation without requiring account registration or complex setup.
-- **YouTube API Integration**: Features a custom-built wrapper for the YouTube IFrame Player API that handles bi-directional state synchronization and local seek detection.
-- **Chat**: Talk about the video in the chat section!
+## Features
 
-## Tech Stack
-### Frontend
-Next.js 14, React, Tailwind CSS, Lucide React, Shadcn/UI (Radix)
+- Shared play, pause, and seek state
+- Presence tracking with automatic pause on disconnect
+- Six-character room codes with no account required
+- Threaded room chat
+- Light and dark themes
 
-### Backend/Database
-Firebase Realtime Database (Presence & State Sync)
+## Tech stack
 
-### Media
-YouTube IFrame Player API
+- Next.js 16 and React 19
+- TypeScript and Tailwind CSS
+- Firebase Realtime Database
+- YouTube IFrame Player API
 
-<img src="github_screenshots/video.png" height="400" alt="Watch party page"/>
-<img src="github_screenshots/menu.png" height="400" alt="Menu page"/>
+## Local setup
+
+1. Install dependencies with `npm install`.
+2. Copy `.env.example` to `.env.local` and add your Firebase web app settings.
+3. Enable Realtime Database for the Firebase project.
+4. Start the app with `npm run dev`.
+
+## Project structure
+
+```text
+app/                    Routes and page composition
+components/ui/          Shared interface primitives
+features/playback/      YouTube loading and playback synchronization
+features/room/          Room state, presence, chat, and room UI
+features/room-entry/    Create and join flows
+lib/                    Shared Firebase and styling setup
+```
+
+Room persistence is kept behind `features/room/room-store.ts`; rendering modules do not construct Firebase paths directly. YouTube event details stay inside the playback feature so the room session works with typed playback changes.
+
+## Screenshots
+
+<img src="github_screenshots/video.png" height="400" alt="YTogether watch party room" />
+<img src="github_screenshots/menu.png" height="400" alt="YTogether room menu" />

@@ -38,9 +38,11 @@ export function YouTubePlayer({
   const [isApiReady, setIsApiReady] = useState(false)
   const [isPlayerReady, setIsPlayerReady] = useState(false)
 
-  latestVideoId.current = videoId
-  onPlaybackChangeRef.current = onPlaybackChange
-  onSeekRef.current = onSeek
+  useEffect(() => {
+    latestVideoId.current = videoId
+    onPlaybackChangeRef.current = onPlaybackChange
+    onSeekRef.current = onSeek
+  }, [onPlaybackChange, onSeek, videoId])
 
   useEffect(() => {
     void loadYouTubeApi().then(() => setIsApiReady(true))
