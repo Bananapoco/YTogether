@@ -1,14 +1,8 @@
 import { Pause, Play } from "lucide-react"
 
-const people = {
-  Alex: { color: "bg-sky-500", text: "text-sky-600 dark:text-sky-400" },
-  Maya: { color: "bg-amber-500", text: "text-amber-600 dark:text-amber-400" },
-  Jordan: { color: "bg-emerald-500", text: "text-emerald-600 dark:text-emerald-400" },
-}
+import { previewPeople as people, type PreviewPerson } from "./preview-people"
 
-type Person = keyof typeof people
-
-const feed: ({ kind: "message"; name: Person; text: string } | { kind: "event"; text: string })[] = [
+const feed: ({ kind: "message"; name: PreviewPerson; text: string } | { kind: "event"; text: string })[] = [
   { kind: "message", name: "Maya", text: "hold on, grabbing snacks" },
   { kind: "event", text: "Alex paused at 2:14" },
   { kind: "message", name: "Alex", text: "take your time" },
