@@ -17,7 +17,7 @@ import type { ChatMessage, Participant, RoomState } from "./types"
 const roomPath = (roomId: string) => `rooms/${roomId}`
 const ROOM_CODE_CHARACTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 
-export async function createRoom(creatorId: string): Promise<string> {
+export async function createRoom(creatorId: string, videoId?: string): Promise<string> {
   for (let attempt = 0; attempt < 5; attempt += 1) {
     const roomId = generateRoomId()
     const result = await runTransaction(ref(db, roomPath(roomId)), (existingRoom) => {
@@ -28,6 +28,7 @@ export async function createRoom(creatorId: string): Promise<string> {
       return {
         createdAt: serverTimestamp(),
         creatorId,
+        videoId: videoId ?? null,
         isPlaying: false,
         currentTime: 0,
         lastUpdate: serverTimestamp(),

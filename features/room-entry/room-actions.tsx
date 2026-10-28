@@ -1,28 +1,51 @@
 "use client"
 
 import { useState } from "react"
-import { AlertCircle, ArrowRight, Play, Users } from "lucide-react"
+import { AlertCircle } from "lucide-react"
 import { useRouter } from "next/navigation"
 
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { extractVideoId } from "@/features/playback/youtube-api"
 import { getParticipantId } from "@/features/room/participant"
 import { createRoom, roomExists } from "@/features/room/room-store"
 import { ParticipantNameDialog } from "./participant-name-dialog"
 
 export function RoomActions() {
   const router = useRouter()
+  const [videoLink, setVideoLink] = useState("")
+  const [videoId, setVideoId] = useState<string | null>(null)
   const [roomCode, setRoomCode] = useState("")
   const [creatorName, setCreatorName] = useState("")
   const [participantName, setParticipantName] = useState("")
   const [joinError, setJoinError] = useState("")
   const [createError, setCreateError] = useState("")
+  const [isJoinOpen, setIsJoinOpen] = useState(false)
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
   const [isJoinDialogOpen, setIsJoinDialogOpen] = useState(false)
   const [isCreating, setIsCreating] = useState(false)
   const [isCheckingRoom, setIsCheckingRoom] = useState(false)
+
+  const handleStart = (event: React.FormEvent) => {
+    event.preventDefault()
+    setCreateError("")
+
+    if (!videoLink.trim()) {
+      setVideoId(null)
+      setIsCreateDialogOpen(true)
+      return
+    }
+
+    const id = extractVideoId(videoLink)
+    if (!id) {
+      setCreateError("That doesn't look like a YouTube link.")
+      return
+    }
+
+    setVideoId(id)
+    setIsCreateDialogOpen(true)
+  }
 
   const handleCreateRoom = async () => {
     if (!creatorName.trim()) {
@@ -33,29 +56,32 @@ export function RoomActions() {
     setCreateError("")
 
     try {
-      const newRoomCode = await createRoom(getParticipantId())
+      const newRoomCode = await createRoom(getParticipantId(), videoId ?? undefined)
       goToRoom(newRoomCode, creatorName)
     } catch (error) {
       console.error("Failed to create room", error)
       setCreateError("Could not create a room. Please try again.")
+      setIsCreateDialogOpen(false)
       setIsCreating(false)
     }
   }
 
   const handleFindRoom = async (event: React.FormEvent) => {
     event.preventDefault()
-    if (!roomCode) {
+    setJoinError("")
+
+    if (roomCode.length !== 6) {
+      setJoinError("Room codes are 6 characters.")
       return
     }
 
-    setJoinError("")
     setIsCheckingRoom(true)
 
     try {
       if (await roomExists(roomCode)) {
         setIsJoinDialogOpen(true)
       } else {
-        setJoinError("Room not found. Check the code and try again.")
+        setJoinError("No room with that code. Check it and try again.")
       }
     } catch (error) {
       console.error("Failed to find room", error)
@@ -71,77 +97,74 @@ export function RoomActions() {
 
   return (
     <>
-      <div className="flex w-full max-w-md flex-col gap-6 md:ml-auto">
-        <Card className="group relative overflow-hidden border-2 border-primary/10 shadow-lg transition-colors hover:border-primary/20">
-          <div className="absolute right-0 top-0 p-4 opacity-10 transition-opacity group-hover:opacity-20">
-            <Play className="-mr-8 -mt-8 h-24 w-24 rotate-12" />
-          </div>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-2xl">Start Watching</CardTitle>
-            <CardDescription>Create a new room and invite others</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            <Button
-              onClick={() => setIsCreateDialogOpen(true)}
-              className="h-12 w-full text-lg font-medium"
-              size="lg"
-            >
-              <Play className="mr-2 h-5 w-5 fill-current" /> Create Room
+      <div className="w-full max-w-lg space-y-4">
+        <form onSubmit={handleStart} className="space-y-2">
+          <Label htmlFor="video-link" className="sr-only">
+            YouTube link
+          </Label>
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <Input
+              id="video-link"
+              type="text"
+              inputMode="url"
+              placeholder="Paste a YouTube link"
+              value={videoLink}
+              aria-invalid={Boolean(createError)}
+              onChange={(event) => {
+                setVideoLink(event.target.value)
+                setCreateError("")
+              }}
+              className="h-12 flex-1 bg-background text-base"
+            />
+            <Button type="submit" size="lg" className="h-12 px-6 text-base">
+              Start room
             </Button>
-            {createError && <p className="text-sm text-destructive">{createError}</p>}
-          </CardContent>
-        </Card>
-
-        <div className="relative">
-          <div className="absolute inset-0 flex items-center"><span className="w-full border-t" /></div>
-          <div className="relative flex justify-center text-xs uppercase">
-            <span className="bg-background px-2 text-muted-foreground">Or join existing</span>
           </div>
-        </div>
+          {createError && <ErrorText>{createError}</ErrorText>}
+        </form>
 
-        <Card className="shadow-md">
-          <CardHeader className="pb-2">
-            <CardTitle className="flex items-center gap-2 text-xl">
-              <Users className="h-5 w-5 text-primary" /> Join a Party
-            </CardTitle>
-            <CardDescription>Enter the code shared with you</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleFindRoom} className="space-y-2">
-              <Label htmlFor="room-code">Room Code</Label>
-              <div className="flex gap-2">
-                <Input
-                  id="room-code"
-                  placeholder="ABC123"
-                  value={roomCode}
-                  onChange={(event) => {
-                    setRoomCode(event.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ""))
-                    setJoinError("")
-                  }}
-                  maxLength={6}
-                  className="h-11 uppercase font-mono text-lg tracking-widest"
-                  required
-                />
-                <Button type="submit" size="lg" className="px-6" disabled={isCheckingRoom || roomCode.length !== 6}>
-                  {isCheckingRoom ? <span className="animate-pulse">...</span> : <ArrowRight className="h-5 w-5" />}
-                </Button>
-              </div>
-              {joinError && (
-                <p className="flex items-center gap-1 text-sm text-destructive">
-                  <AlertCircle className="h-3 w-3" /> {joinError}
-                </p>
-              )}
-            </form>
-          </CardContent>
-        </Card>
+        {isJoinOpen ? (
+          <form onSubmit={handleFindRoom} className="space-y-2">
+            <Label htmlFor="room-code" className="text-muted-foreground">
+              Room code
+            </Label>
+            <div className="flex gap-2">
+              <Input
+                id="room-code"
+                placeholder="ABC123"
+                value={roomCode}
+                autoFocus
+                aria-invalid={Boolean(joinError)}
+                onChange={(event) => {
+                  setRoomCode(event.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ""))
+                  setJoinError("")
+                }}
+                maxLength={6}
+                className="h-11 max-w-44 bg-background font-mono text-lg uppercase tracking-widest"
+              />
+              <Button type="submit" variant="outline" size="lg" className="h-11" disabled={isCheckingRoom}>
+                {isCheckingRoom ? "Checking..." : "Join"}
+              </Button>
+            </div>
+            {joinError && <ErrorText>{joinError}</ErrorText>}
+          </form>
+        ) : (
+          <button
+            type="button"
+            onClick={() => setIsJoinOpen(true)}
+            className="text-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
+          >
+            Have a code? <span className="font-medium text-foreground">Join a room</span>
+          </button>
+        )}
       </div>
 
       <ParticipantNameDialog
         open={isCreateDialogOpen}
-        title="Create Room"
-        description="Enter your name so others know who started the party."
-        submitLabel="Start Party"
-        submittingLabel="Creating..."
+        title="Start a room"
+        description="Your name shows up for everyone in the room."
+        submitLabel="Start room"
+        submittingLabel="Starting..."
         name={creatorName}
         isSubmitting={isCreating}
         onNameChange={setCreatorName}
@@ -150,14 +173,22 @@ export function RoomActions() {
       />
       <ParticipantNameDialog
         open={isJoinDialogOpen}
-        title={`Join Room ${roomCode}`}
-        description="Enter your name to join the party."
-        submitLabel="Join Party"
+        title={`Join room ${roomCode}`}
+        description="Pick a name so everyone knows who's here."
+        submitLabel="Join room"
         name={participantName}
         onNameChange={setParticipantName}
         onOpenChange={setIsJoinDialogOpen}
         onSubmit={() => goToRoom(roomCode, participantName)}
       />
     </>
+  )
+}
+
+function ErrorText({ children }: { children: React.ReactNode }) {
+  return (
+    <p className="flex items-center gap-1 text-sm text-destructive">
+      <AlertCircle className="h-3 w-3" /> {children}
+    </p>
   )
 }
