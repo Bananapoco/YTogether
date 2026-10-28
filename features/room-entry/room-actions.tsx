@@ -97,8 +97,8 @@ export function RoomActions() {
 
   return (
     <>
-      <div className="w-full max-w-lg space-y-4">
-        <form onSubmit={handleStart} className="space-y-2">
+      <div className="flex w-full max-w-lg flex-col items-center gap-3 md:items-start">
+        <form onSubmit={handleStart} className="w-full space-y-2">
           <Label htmlFor="video-link" className="sr-only">
             YouTube link
           </Label>
@@ -124,7 +124,7 @@ export function RoomActions() {
         </form>
 
         {isJoinOpen ? (
-          <form onSubmit={handleFindRoom} className="space-y-2">
+          <form onSubmit={handleFindRoom} className="w-full space-y-2 pt-1">
             <Label htmlFor="room-code" className="text-muted-foreground">
               Room code
             </Label>
@@ -152,9 +152,9 @@ export function RoomActions() {
           <button
             type="button"
             onClick={() => setIsJoinOpen(true)}
-            className="text-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
+            className="text-sm text-muted-foreground underline decoration-muted-foreground/40 underline-offset-4 transition-colors hover:text-foreground hover:decoration-foreground"
           >
-            Have a code? <span className="font-medium text-foreground">Join a room</span>
+            Have a code? Join a room
           </button>
         )}
       </div>
