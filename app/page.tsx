@@ -4,6 +4,21 @@ import { ThemeToggle } from "@/components/theme-toggle"
 import { RoomActions } from "@/features/room-entry/room-actions"
 import { RoomPreview } from "@/features/room-entry/room-preview"
 
+const steps = [
+  {
+    title: "Paste a link",
+    text: "Any YouTube video, short, or livestream. The room opens with it ready to go.",
+  },
+  {
+    title: "Send the room",
+    text: "Send friends the six-character room code. They enter it here, pick a name, and they're in.",
+  },
+  {
+    title: "Watch in sync",
+    text: "When anyone plays, pauses, or skips ahead, everyone follows. Chat sits right next to the video.",
+  },
+]
+
 export default function Home() {
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -35,6 +50,19 @@ export default function Home() {
 
           <RoomPreview />
         </div>
+
+        <section className="border-t py-14 md:py-16">
+          <h2 className="font-display text-2xl font-medium">How it works</h2>
+          <ol className="mt-8 grid gap-8 md:grid-cols-3">
+            {steps.map((step, index) => (
+              <li key={step.title} className="space-y-2">
+                <span className="font-display text-sm text-primary">{index + 1}</span>
+                <h3 className="font-medium">{step.title}</h3>
+                <p className="text-sm text-muted-foreground">{step.text}</p>
+              </li>
+            ))}
+          </ol>
+        </section>
       </main>
     </div>
   )
