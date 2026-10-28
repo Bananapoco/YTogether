@@ -6,23 +6,21 @@ import { RoomPreview } from "@/features/room-entry/room-preview"
 
 export default function Home() {
   return (
-    <div className="flex min-h-screen flex-col bg-background text-foreground">
-      <header className="sticky top-0 z-10 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container mx-auto flex h-16 max-w-5xl items-center justify-between px-4">
-          <div className="flex items-center gap-2">
-            <div className="rounded-lg bg-primary p-1">
-              <Tv className="h-5 w-5 text-primary-foreground" />
-            </div>
-            <span className="text-xl font-bold tracking-tight">YTogether</span>
+    <div className="min-h-screen bg-background text-foreground">
+      <header className="mx-auto flex max-w-5xl items-center justify-between px-4 py-5">
+        <div className="flex items-center gap-2">
+          <div className="rounded-lg bg-primary p-1">
+            <Tv className="h-5 w-5 text-primary-foreground" />
           </div>
-          <ThemeToggle />
+          <span className="font-display text-xl font-semibold">YTogether</span>
         </div>
+        <ThemeToggle />
       </header>
 
-      <main className="flex flex-1 items-center justify-center p-4 md:p-8">
-        <div className="grid w-full max-w-5xl items-center gap-8 md:grid-cols-2">
+      <main className="mx-auto max-w-5xl px-4">
+        <div className="grid items-center gap-10 pb-16 pt-8 md:grid-cols-2 md:pb-20 md:pt-14">
           <section className="flex flex-col gap-4 text-center md:text-left">
-            <h1 className="text-4xl font-extrabold tracking-tight md:text-5xl lg:text-6xl">
+            <h1 className="font-display text-4xl font-medium leading-[1.05] md:text-5xl lg:text-6xl">
               Watch YouTube <br className="hidden md:block" />
               <span className="text-primary">Together</span>
             </h1>
