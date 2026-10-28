@@ -46,7 +46,7 @@ export function VideoInput({ onVideoId }: VideoInputProps) {
             className="border-input/50 bg-card/50 pl-9"
           />
         </div>
-        <Button type="submit">Load Video</Button>
+        <Button type="submit">Change Video</Button>
       </div>
       {error && <p className="text-sm text-destructive">{error}</p>}
     </form>

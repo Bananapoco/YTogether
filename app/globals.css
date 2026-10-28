@@ -137,6 +137,54 @@
   --yt-text-secondary: #AAAAAA;
 }
 
+@keyframes hiw-pop {
+  from { opacity: 0; transform: translateY(6px) scale(0.95); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes hiw-cursor {
+  from { opacity: 0; transform: translate(var(--from-x, 60px), var(--from-y, 40px)); }
+  30% { opacity: 1; }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes hiw-press {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(0.88); }
+}
+
+@keyframes hiw-out {
+  from { opacity: 1; transform: none; }
+  to { opacity: 0; transform: translateX(-24px) scale(0.96); }
+}
+
+@keyframes hiw-in {
+  from { opacity: 0; transform: translateX(24px) scale(0.96); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes hiw-flash {
+  0% { opacity: 0; transform: scale(0.92); }
+  15%, 85% { opacity: 1; transform: none; }
+  100% { opacity: 0; transform: none; }
+}
+
+@keyframes hiw-switch {
+  from { transform: none; }
+  to { transform: translateX(var(--switch-x)); }
+}
+
+@keyframes hiw-fill {
+  from { width: var(--fill-from, 0%); }
+  to { width: var(--fill-to, 100%); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hiw-anim {
+    animation: none !important;
+  }
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;

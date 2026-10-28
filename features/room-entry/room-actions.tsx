@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { AlertCircle } from "lucide-react"
+import { AlertCircle, Play } from "lucide-react"
 import { useRouter } from "next/navigation"
 
 import { Button } from "@/components/ui/button"
@@ -117,7 +117,7 @@ export function RoomActions() {
               className="h-12 flex-1 bg-background text-base"
             />
             <Button type="submit" size="lg" className="h-12 px-6 text-base">
-              Start room
+              <Play className="fill-current" /> Start room
             </Button>
           </div>
           {createError && <ErrorText>{createError}</ErrorText>}
@@ -162,8 +162,8 @@ export function RoomActions() {
       <ParticipantNameDialog
         open={isCreateDialogOpen}
         title="Start a room"
-        description="Your name shows up for everyone in the room."
         submitLabel="Start room"
+        submitIcon={<Play className="fill-current" />}
         submittingLabel="Starting..."
         name={creatorName}
         isSubmitting={isCreating}

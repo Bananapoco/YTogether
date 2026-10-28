@@ -38,6 +38,7 @@ declare namespace YT {
     getCurrentTime(): number
     getPlayerState(): number
     getVideoData(): { video_id: string }
+    cueVideoById(videoId: string): void
     loadVideoById(videoId: string): void
     pauseVideo(): void
     playVideo(): void

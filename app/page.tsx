@@ -7,7 +7,10 @@ import { RoomPreview } from "@/features/room-entry/room-preview"
 
 export default function Home() {
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div
+      className="bg-background text-foreground"
+      style={{ zoom: 1.1, minHeight: "calc(100vh / 1.1)" }}
+    >
       <header className="mx-auto flex max-w-5xl items-center justify-between px-4 py-5">
         <div className="flex items-center gap-2">
           <div className="rounded-lg bg-primary p-1">
@@ -19,7 +22,7 @@ export default function Home() {
       </header>
 
       <main>
-        <div className="mx-auto grid max-w-5xl items-center gap-10 px-4 pb-16 pt-8 md:grid-cols-2 md:pb-24 md:pt-14">
+        <div className="mx-auto grid max-w-5xl items-center gap-10 px-4 pb-12 pt-8 md:grid-cols-2 md:pb-16 md:pt-14">
           <section className="flex flex-col gap-4 text-center md:text-left">
             <h1 className="text-4xl font-extrabold tracking-tight md:text-5xl lg:text-6xl">
               Watch YouTube <br className="hidden md:block" />

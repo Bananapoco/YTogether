@@ -58,7 +58,7 @@ export function YouTubePlayer({
       width: "100%",
       videoId: latestVideoId.current ?? "",
       playerVars: {
-        autoplay: 1,
+        autoplay: 0,
         controls: 1,
         enablejsapi: 1,
         modestbranding: 1,
@@ -107,7 +107,11 @@ export function YouTubePlayer({
 
     if (player.getVideoData().video_id !== videoId) {
       remoteCommandRef.current = remoteCommand(isPlaying)
-      player.loadVideoById(videoId)
+      if (isPlaying) {
+        player.loadVideoById(videoId)
+      } else {
+        player.cueVideoById(videoId)
+      }
     }
   }, [isPlayerReady, isPlaying, videoId])
 

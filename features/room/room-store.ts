@@ -118,7 +118,7 @@ export async function closeRoom(roomId: string) {
 export async function selectVideo(roomId: string, videoId: string) {
   await update(ref(db, roomPath(roomId)), {
     videoId,
-    isPlaying: true,
+    isPlaying: false,
     currentTime: 0,
     lastUpdate: serverTimestamp(),
   })

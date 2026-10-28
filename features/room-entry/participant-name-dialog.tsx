@@ -1,11 +1,13 @@
 "use client"
 
+import { useState } from "react"
+import { AlertCircle } from "lucide-react"
+
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
   DialogContent,
   DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
@@ -15,8 +17,9 @@ import { Label } from "@/components/ui/label"
 interface ParticipantNameDialogProps {
   open: boolean
   title: string
-  description: string
+  description?: string
   submitLabel: string
+  submitIcon?: React.ReactNode
   submittingLabel?: string
   name: string
   isSubmitting?: boolean
@@ -30,6 +33,7 @@ export function ParticipantNameDialog({
   title,
   description,
   submitLabel,
+  submitIcon,
   submittingLabel = "Working...",
   name,
   isSubmitting = false,
@@ -37,35 +41,63 @@ export function ParticipantNameDialog({
   onOpenChange,
   onSubmit,
 }: ParticipantNameDialogProps) {
+  const [error, setError] = useState("")
+  const inputId = `${submitLabel.replace(/\s+/g, "-").toLowerCase()}-name`
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px]">
+    <Dialog
+      open={open}
+      onOpenChange={(nextOpen) => {
+        setError("")
+        onOpenChange(nextOpen)
+      }}
+    >
+      <DialogContent
+        className="gap-6 sm:max-w-md"
+        {...(!description && { "aria-describedby": undefined })}
+      >
         <DialogHeader>
-          <DialogTitle>{title}</DialogTitle>
-          <DialogDescription>{description}</DialogDescription>
+          <DialogTitle className="text-xl">{title}</DialogTitle>
+          {description && <DialogDescription>{description}</DialogDescription>}
         </DialogHeader>
         <form
+          noValidate
+          className="space-y-2"
           onSubmit={(event) => {
             event.preventDefault()
+            if (!name.trim()) {
+              setError("Enter a name so others know who's here.")
+              return
+            }
             onSubmit()
           }}
         >
-          <div className="grid gap-2 py-4">
-            <Label htmlFor={`${submitLabel}-name`}>Your Name</Label>
+          <Label htmlFor={inputId} className="sr-only">
+            Your name
+          </Label>
+          <div className="flex gap-2">
             <Input
-              id={`${submitLabel}-name`}
+              id={inputId}
               value={name}
-              onChange={(event) => onNameChange(event.target.value)}
-              placeholder="e.g. Alex"
+              aria-invalid={Boolean(error)}
+              onChange={(event) => {
+                onNameChange(event.target.value)
+                setError("")
+              }}
+              placeholder="Your name"
+              className="h-11 flex-1"
               autoFocus
-              required
             />
-          </div>
-          <DialogFooter>
-            <Button type="submit" disabled={isSubmitting || !name.trim()}>
+            <Button type="submit" size="lg" className="h-11 px-5" disabled={isSubmitting}>
+              {!isSubmitting && submitIcon}
               {isSubmitting ? submittingLabel : submitLabel}
             </Button>
-          </DialogFooter>
+          </div>
+          {error && (
+            <p className="flex items-center gap-1 text-sm text-destructive">
+              <AlertCircle className="h-3 w-3" /> {error}
+            </p>
+          )}
         </form>
       </DialogContent>
     </Dialog>
