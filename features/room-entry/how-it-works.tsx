@@ -142,7 +142,7 @@ function LinkScene() {
           className="hiw-anim absolute -top-10 right-0 flex items-center gap-1 rounded-full bg-muted px-2.5 py-1 text-xs font-medium text-foreground"
           style={anim("hiw-pop", 0.25, 2.5)}
         >
-          <Check className="h-3 w-3" /> Copied
+          <Check className="h-3 w-3" /> Video loaded!
         </span>
         <Link2 className="h-5 w-5 shrink-0 text-muted-foreground" />
         <span className="hiw-anim truncate text-base" style={anim("hiw-pop", 0.2, 0.7)}>
