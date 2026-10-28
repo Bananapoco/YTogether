@@ -1,39 +1,28 @@
-import { Play } from "lucide-react"
+import { Pause, Play } from "lucide-react"
 
-const participants = [
-  { name: "Alex", color: "bg-sky-500" },
-  { name: "Maya", color: "bg-amber-500" },
-  { name: "Jordan", color: "bg-emerald-500" },
-]
+const people = {
+  Alex: { color: "bg-sky-500", text: "text-sky-600 dark:text-sky-400" },
+  Maya: { color: "bg-amber-500", text: "text-amber-600 dark:text-amber-400" },
+  Jordan: { color: "bg-emerald-500", text: "text-emerald-600 dark:text-emerald-400" },
+}
 
-const messages = [
-  { name: "Maya", color: "text-amber-600 dark:text-amber-400", text: "hold on, grabbing snacks" },
-  { name: "Alex", color: "text-sky-600 dark:text-sky-400", text: "paused, take your time" },
-  { name: "Jordan", color: "text-emerald-600 dark:text-emerald-400", text: "this next part is so good" },
+type Person = keyof typeof people
+
+const feed: ({ kind: "message"; name: Person; text: string } | { kind: "event"; text: string })[] = [
+  { kind: "message", name: "Maya", text: "hold on, grabbing snacks" },
+  { kind: "event", text: "Alex paused at 2:14" },
+  { kind: "message", name: "Alex", text: "take your time" },
+  { kind: "message", name: "Jordan", text: "this next part is so good" },
 ]
 
 export function RoomPreview() {
   return (
     <div aria-hidden className="w-full select-none overflow-hidden rounded-2xl border bg-card">
-      <div className="flex items-center justify-between px-4 py-3">
-        <span className="font-mono text-xs tracking-widest text-muted-foreground">ROOM K7Q2XD</span>
-        <div className="flex -space-x-2">
-          {participants.map((participant) => (
-            <Avatar key={participant.name} {...participant} />
-          ))}
-        </div>
-      </div>
-
       <div className="relative aspect-video overflow-hidden bg-gradient-to-b from-amber-200 via-rose-400 to-indigo-950">
         <div className="absolute -bottom-1/3 -left-1/4 h-2/3 w-3/4 rounded-[50%] bg-indigo-950" />
         <div className="absolute -bottom-1/4 right-[-15%] h-2/3 w-3/4 rounded-[50%] bg-slate-900" />
         <div className="absolute left-[58%] top-[30%] h-10 w-10 rounded-full bg-amber-100/90" />
         <div className="absolute inset-0 bg-black/30" />
-
-        <div className="absolute left-3 top-3 flex items-center gap-2 rounded-full bg-black/60 py-1 pl-1 pr-3 text-xs text-white backdrop-blur">
-          <Avatar name="Alex" color="bg-sky-500" size="sm" />
-          Alex paused at 2:14
-        </div>
 
         <div className="absolute inset-0 flex items-center justify-center">
           <div className="rounded-full bg-black/50 p-3 text-white">
@@ -51,24 +40,30 @@ export function RoomPreview() {
         </div>
       </div>
 
-      <ul className="space-y-1.5 px-4 py-3 text-sm">
-        {messages.map((message) => (
-          <li key={message.text}>
-            <span className={`font-medium ${message.color}`}>{message.name}</span>{" "}
-            <span className="text-muted-foreground">{message.text}</span>
-          </li>
-        ))}
+      <ul className="space-y-3 px-4 py-4 text-sm">
+        {feed.map((item) =>
+          item.kind === "event" ? (
+            <li key={item.text} className="flex items-center gap-2 text-xs text-muted-foreground">
+              <span className="flex h-7 w-7 items-center justify-center">
+                <Pause className="h-3.5 w-3.5 fill-current" />
+              </span>
+              {item.text}
+            </li>
+          ) : (
+            <li key={item.text} className="flex items-center gap-2">
+              <span
+                className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-semibold text-white ${people[item.name].color}`}
+              >
+                {item.name[0]}
+              </span>
+              <p>
+                <span className={`font-medium ${people[item.name].text}`}>{item.name}</span>{" "}
+                <span className="text-muted-foreground">{item.text}</span>
+              </p>
+            </li>
+          ),
+        )}
       </ul>
     </div>
-  )
-}
-
-function Avatar({ name, color, size = "md" }: { name: string; color: string; size?: "sm" | "md" }) {
-  const sizeClass = size === "sm" ? "h-5 w-5 text-[10px]" : "h-7 w-7 text-xs ring-2 ring-card"
-
-  return (
-    <span className={`flex items-center justify-center rounded-full font-semibold text-white ${color} ${sizeClass}`}>
-      {name[0]}
-    </span>
   )
 }
