@@ -96,45 +96,44 @@
 }
 
 .dark {
-  /* Dark mode - YouTube-inspired */
-  --background: #0F0F0F;
-  --foreground: #FFFFFF;
-  --card: #272727;
-  --card-foreground: #FFFFFF;
-  --popover: #272727;
-  --popover-foreground: #FFFFFF;
-  --primary: #FF0000; /* YouTube red */
+  /* Dark mode — warm charcoal, not YouTube's muddy gray */
+  --background: #0B0B0D;
+  --foreground: #F4F4F5;
+  --card: #161618;
+  --card-foreground: #F4F4F5;
+  --popover: #1C1C1F;
+  --popover-foreground: #F4F4F5;
+  --primary: #FF4D4D;
   --primary-foreground: #FFFFFF;
-  --secondary: #272727;
-  --secondary-foreground: #FFFFFF;
-  --muted: #272727;
-  --muted-foreground: #AAAAAA;
-  --accent: #3F3F3F;
-  --accent-foreground: #FFFFFF;
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: #3F3F3F;
-  --input: #3F3F3F;
-  --ring: #FF0000;
+  --secondary: #1C1C1F;
+  --secondary-foreground: #F4F4F5;
+  --muted: #121214;
+  --muted-foreground: #A1A1AA;
+  --accent: #232326;
+  --accent-foreground: #F4F4F5;
+  --destructive: oklch(0.72 0.18 22);
+  --border: rgb(255 255 255 / 8%);
+  --input: rgb(255 255 255 / 10%);
+  --ring: #FF4D4D;
   --chart-1: oklch(0.488 0.243 264.376);
   --chart-2: oklch(0.696 0.17 162.48);
   --chart-3: oklch(0.769 0.188 70.08);
   --chart-4: oklch(0.627 0.265 303.9);
   --chart-5: oklch(0.645 0.246 16.439);
-  --sidebar: #272727;
-  --sidebar-foreground: #FFFFFF;
-  --sidebar-primary: #FF0000;
+  --sidebar: #121214;
+  --sidebar-foreground: #F4F4F5;
+  --sidebar-primary: #FF4D4D;
   --sidebar-primary-foreground: #FFFFFF;
-  --sidebar-accent: #3F3F3F;
-  --sidebar-accent-foreground: #FFFFFF;
-  --sidebar-border: #3F3F3F;
-  --sidebar-ring: #FF0000;
-  
-  /* Custom YouTube colors - Dark mode */
-  --yt-red: #FF0000;
-  --yt-bg: #0F0F0F;
-  --yt-surface: #272727;
-  --yt-gray: #3F3F3F;
-  --yt-text-secondary: #AAAAAA;
+  --sidebar-accent: #232326;
+  --sidebar-accent-foreground: #F4F4F5;
+  --sidebar-border: rgb(255 255 255 / 8%);
+  --sidebar-ring: #FF4D4D;
+
+  --yt-red: #FF4D4D;
+  --yt-bg: #0B0B0D;
+  --yt-surface: #161618;
+  --yt-gray: #232326;
+  --yt-text-secondary: #A1A1AA;
 }
 
 @keyframes hiw-pop {

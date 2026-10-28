@@ -1,4 +1,4 @@
-import { Tv } from "lucide-react"
+import { Play } from "lucide-react"
 
 import { ThemeToggle } from "@/components/theme-toggle"
 import { HowItWorks } from "@/features/room-entry/how-it-works"
@@ -13,8 +13,8 @@ export default function Home() {
     >
       <header className="mx-auto flex max-w-5xl items-center justify-between px-4 py-5">
         <div className="flex items-center gap-2">
-          <div className="rounded-lg bg-primary p-1">
-            <Tv className="h-5 w-5 text-primary-foreground" />
+          <div className="flex h-7 w-9 items-center justify-center rounded-md bg-primary">
+            <Play className="h-3 w-3 fill-white text-white" />
           </div>
           <span className="text-xl font-bold tracking-tight">YTogether</span>
         </div>

@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
-import { Check, Copy, Link2, MessageCircle, MousePointer2, Pause, Play, Tv } from "lucide-react"
+import { Check, Copy, Link2, MessageCircle, MousePointer2, Pause, Play } from "lucide-react"
 
 import { previewPeople, type PreviewPerson } from "./preview-people"
 import { VideoArt } from "./video-art"
@@ -207,7 +207,7 @@ function SendScene() {
 
         <div className="absolute inset-x-0 top-0 flex items-center justify-between bg-gradient-to-b from-black/70 to-transparent p-3 pb-8">
           <span className="flex items-center gap-1.5 font-semibold">
-            <Tv className="h-3.5 w-3.5" /> YTogether
+            <span className="flex h-4 w-6 items-center justify-center rounded-sm bg-primary"><Play className="h-2 w-2 fill-white text-white" /></span> YTogether
           </span>
           <span className="flex items-center gap-2 rounded-lg bg-white/15 py-1 pl-2.5 pr-1 backdrop-blur">
             <span className="font-mono text-sm font-semibold tracking-[0.15em]">K7Q2XD</span>
@@ -287,7 +287,7 @@ function SendScene() {
             }}
           />
           <span className="relative flex h-12 w-12 items-center justify-center rounded-xl bg-primary">
-            <Tv className="h-6 w-6 text-white" />
+            <Play className="h-3.5 w-3.5 fill-white text-white" />
           </span>
           <span className="relative flex h-12 w-12 items-center justify-center rounded-xl bg-[#34C759]">
             <MessageCircle className="h-6 w-6 fill-white text-white" />
