@@ -2,6 +2,7 @@ import { Tv, Users, Video } from "lucide-react"
 
 import { ThemeToggle } from "@/components/theme-toggle"
 import { RoomActions } from "@/features/room-entry/room-actions"
+import { RoomPreview } from "@/features/room-entry/room-preview"
 
 export default function Home() {
   return (
@@ -32,9 +33,12 @@ export default function Home() {
               <FeaturePill icon={<Video className="h-4 w-4" />} label="Real-time Sync" />
               <FeaturePill icon={<Users className="h-4 w-4" />} label="No Account Needed" />
             </div>
+            <div className="mt-4 flex justify-center md:justify-start">
+              <RoomActions />
+            </div>
           </section>
 
-          <RoomActions />
+          <RoomPreview />
         </div>
       </main>
     </div>
